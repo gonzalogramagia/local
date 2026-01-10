@@ -89,7 +89,13 @@ export default function NoteApp({ lang }: NoteAppProps) {
                 node = node.parentElement;
             }
 
-            if (targetBlockId === editingBlockId) return;
+            if (targetBlockId === editingBlockId) {
+                const picker = document.getElementById("emoji-picker-container");
+                if (showEmojiPicker && picker && !picker.contains(target)) {
+                    setShowEmojiPicker(false);
+                }
+                return;
+            }
 
             const current = blocks.find((b) => b.id === editingBlockId);
             if (current) {
@@ -110,6 +116,7 @@ export default function NoteApp({ lang }: NoteAppProps) {
 
             setEditingBlockId(null);
             setEditingContent("");
+            setShowEmojiPicker(false);
         };
 
         document.addEventListener("click", onDocClick);
@@ -187,7 +194,7 @@ export default function NoteApp({ lang }: NoteAppProps) {
             setShowEmojiPicker(true);
 
             const { top, left, height } = getCaretCoordinates(e.target, e.target.selectionStart);
-            setEmojiCoords({ top: top + height, left });
+            setEmojiCoords({ top: top + height + 5, left: left + 15 });
         } else {
             setShowEmojiPicker(false);
         }
@@ -379,26 +386,28 @@ export default function NoteApp({ lang }: NoteAppProps) {
                                     placeholder={`${t.blockNamePlaceholder} #${block.tag}...`}
                                 />
                                 <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => copyToClipboard(block.id, block.content)}
-                                        className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${copiedBlockId === block.id
-                                            ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                                            : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                            }`}
-                                        title={t.copy}
-                                    >
-                                        {copiedBlockId === block.id ? (
-                                            <>
-                                                <Check className="w-4 h-4" />
-                                                <span>{t.copied}</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Copy className="w-4 h-4" />
-                                                <span>{t.copy}</span>
-                                            </>
-                                        )}
-                                    </button>
+                                    {editingBlockId !== block.id && (
+                                        <button
+                                            onClick={() => copyToClipboard(block.id, block.content)}
+                                            className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${copiedBlockId === block.id
+                                                ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                                                : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                }`}
+                                            title={t.copy}
+                                        >
+                                            {copiedBlockId === block.id ? (
+                                                <>
+                                                    <Check className="w-4 h-4" />
+                                                    <span>{t.copied}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Copy className="w-4 h-4" />
+                                                    <span>{t.copy}</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
 
                                     <button
                                         onClick={() => toggleEditBlock(block)}
@@ -444,6 +453,7 @@ export default function NoteApp({ lang }: NoteAppProps) {
                                     />
                                     {showEmojiPicker && filteredEmojis.length > 0 && (
                                         <div
+                                            id="emoji-picker-container"
                                             className="absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden min-w-[200px]"
                                             style={{
                                                 top: emojiCoords.top,
@@ -574,7 +584,8 @@ function getCaretCoordinates(element: HTMLTextAreaElement, position: number) {
     div.style.left = "0px";
     div.style.visibility = "hidden";
     div.style.whiteSpace = "pre-wrap";
-    div.style.width = `${element.clientWidth}px`;
+    // Use the copied width to ensure wrapping matches exactly if box-sizing is handled
+    div.style.width = copyStyle.width;
 
     div.textContent = element.value.substring(0, position);
 
