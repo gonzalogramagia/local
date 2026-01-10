@@ -10,14 +10,13 @@
 
 - **🔒 Total Privacy**: Your data belongs to you. It's stored entirely in your browser's `localStorage`.
 - **✍️ Markdown Formatting**:
-    - Use `**bold**` for **bold** text.
+    - Use `*bold*` for **bold** text.
     - Use `_italics_` for *italics*.
     - URLs are automatically turned into clickable links.
 - **🖱️ Smart Interactions**:
     - **Double-click to Edit**: Prevents accidental triggers while allowing easy text selection.
-    - **Single-click Title**: Seamlessly edit note titles without stealing focus from the content.
-- **📋 Clipboard Mastery**: One-click "Copiar" button with instant in-button feedback (no browser alerts).
-- **🗑️ Safe Deletion**: Two-step confirmation system ("Eliminar" ➔ "Confirmar?") to avoid mistakes.
+- **📋 Clipboard Mastery**: One-click "Copiar" button with instant in-button feedback.
+- **🗑️ Safe Deletion**: Two-step confirmation system ("Eliminar" ➔ "Seguro?") to avoid mistakes.
 - **🎨 Modern UI**: Clean, responsive design with dark mode support and sleek [Lucide](https://lucide.dev/) icons.
 
 ---
@@ -31,40 +30,29 @@
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [Yarn](https://yarnpkg.com/) or [npm](https://www.npmjs.com/)
-
-### Setup
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/gonzalogramagia/local.git
-   cd local
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   yarn install
-   # or
-   npm install
-   ```
-
-3. **Run the development server**:
-   ```bash
-   yarn dev
-   # or
-   npm run dev
-   ```
-
-4. **Visit the app**:
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+## � Usage
+ 
+ ### ✍️ Creating and Editing Notes
+ - **New Note**: Click the **"+ Agregar Bloque"** button to create a new note block.
+ - **Edit Title**: Click on the note title (e.g., "Bloque #xyz") to rename it.
+ - **Edit Content**: Double-click on the note body or click the **Pencil icon** to enter edit mode. 
+ - **Save**: Click outside the note or press `Enter` (without Shift) to save your changes.
+ 
+ ### 🚀 Emoji Picker
+ - **Trigger**: Type `:` followed by a keyword (e.g., `:rocket`) inside any note.
+ - **Select**: Use `Arrow` keys to navigate and `Enter` to insert the emoji.
+ 
+ ### 🔗 Quick Actions
+ - **Copy**: Click the **Copy icon** to copy the entire note content to your clipboard.
+ - **Delete**: Click the **Trash icon** twice (Safe Delete) to permanently remove a note.
+ - **Emojis Site**: Click the **Smile button** in the bottom-left corner to explore more emojis.
 
 ---
 
 ## 📄 License
 
 This project is created for personal use and is shared as-is. Feel free to explore and modify it for your own local productivity!
+
+---
+
+Made with 💛 by [Gonza](https://github.com/gonzalogramagia)

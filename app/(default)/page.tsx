@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Pencil, Trash2, Save, Check, Github } from "lucide-react";
+import { Copy, Pencil, Trash2, Save, Check, Github, Smile } from "lucide-react";
+import { symbols, SymbolItem } from "../data/symbols";
 
 interface TextBlock {
   id: string;
@@ -16,6 +17,14 @@ export default function LocalPage() {
   const [editingContent, setEditingContent] = useState("");
   const [copiedBlockId, setCopiedBlockId] = useState<string | null>(null);
   const [deletingBlockId, setDeletingBlockId] = useState<string | null>(null);
+
+  // Emoji Picker State
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [emojiSearch, setEmojiSearch] = useState("");
+  const [filteredEmojis, setFilteredEmojis] = useState<SymbolItem[]>([]);
+  const [emojiSelectedIndex, setEmojiSelectedIndex] = useState(0);
+  const [emojiCoords, setEmojiCoords] = useState({ top: 0, left: 0 });
+  const [triggerIdx, setTriggerIdx] = useState<number>(-1);
   // ahora usamos IDs cortos tipo hash de 4 caracteres
 
   // Cargar datos del localStorage al montar el componente
@@ -146,6 +155,118 @@ export default function LocalPage() {
     if (current) updateBlock(current.id, editingContent);
   };
 
+  // --- Emoji Picker Logic ---
+
+  useEffect(() => {
+    if (showEmojiPicker) {
+      const emojis = symbols.filter(
+        (s) =>
+          s.category === "Emojis" &&
+          (s.symbol.includes(emojiSearch) ||
+            s.description.en.main.toLowerCase().includes(emojiSearch.toLowerCase()) ||
+            s.description.es.main.toLowerCase().includes(emojiSearch.toLowerCase()) ||
+            s.tags?.en.some(tag => tag.toLowerCase().includes(emojiSearch.toLowerCase())) ||
+            s.tags?.es.some(tag => tag.toLowerCase().includes(emojiSearch.toLowerCase())))
+      ).slice(0, 10); // Limit to 10 results
+      setFilteredEmojis(emojis);
+      setEmojiSelectedIndex(0);
+    }
+  }, [emojiSearch, showEmojiPicker]);
+
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    blockId: string
+  ) => {
+    const val = e.target.value;
+    setEditingContent(val);
+
+    const cursor = e.target.selectionStart;
+    // Check for trigger ":keyword"
+    // Look backwards from cursor
+    const textBeforeCursor = val.slice(0, cursor);
+    // Regex: Match a colon potentially served by spaces, then alphanumeric chars until end
+    const match = textBeforeCursor.match(/(?:^|\s)(:[a-z0-9_+-]*)$/i);
+
+    if (match) {
+      const matchStr = match[1]; // e.g. ":smile"
+      const query = matchStr.slice(1); // "smile"
+
+      // Calculate trigger index (absolute/relative to value)
+      // match.index is relative to textBeforeCursor. 
+      // We need the exact position of the colon.
+      // If match includes space (e.g. " :sm"), the colon is at match.index + 1
+      // If match is at start (e.g. ":sm"), colon is at match.index
+      const spaceOffset = match[0].startsWith(" ") ? 1 : 0;
+      const index = (match.index || 0) + spaceOffset + (match.input?.length || textBeforeCursor.length) - match[0].length;
+
+      // Verify we are actually at the end (regex $ handles this but let's be safe)
+
+      setTriggerIdx(textBeforeCursor.lastIndexOf(":"));
+      setEmojiSearch(query);
+      setShowEmojiPicker(true);
+
+      // Calculate coordinates
+      const { top, left, height } = getCaretCoordinates(e.target, e.target.selectionStart);
+      setEmojiCoords({ top: top + height, left });
+    } else {
+      setShowEmojiPicker(false);
+    }
+  };
+
+  const insertEmoji = (emoji: SymbolItem) => {
+    if (triggerIdx === -1) return;
+
+    const before = editingContent.slice(0, triggerIdx);
+    const after = editingContent.slice(editingContent.indexOf(":", triggerIdx) + 1 + emojiSearch.length);
+
+    const newContent = before + emoji.symbol + after;
+    setEditingContent(newContent);
+    setShowEmojiPicker(false);
+    setTriggerIdx(-1);
+
+    // Focus back will happen automatically as we are in the same input, 
+    // but cursor position reset might be needed. 
+    // For simplicity, we just update content.
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    blockId: string
+  ) => {
+    if (showEmojiPicker && filteredEmojis.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setEmojiSelectedIndex((prev) => (prev + 1) % filteredEmojis.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setEmojiSelectedIndex((prev) => (prev - 1 + filteredEmojis.length) % filteredEmojis.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        insertEmoji(filteredEmojis[emojiSelectedIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowEmojiPicker(false);
+        return;
+      }
+    }
+
+    if (e.key === "Enter" && !e.shiftKey) {
+      // Enter without Shift -> save and exit edit mode
+      e.preventDefault();
+      updateBlock(blockId, editingContent);
+      setEditingBlockId(null);
+      setEditingContent("");
+      (e.target as HTMLTextAreaElement).blur();
+    }
+    // Shift+Enter should insert newline (default behavior)
+  };
+
   // Convierte URLs en enlaces y aplica formato markdown (negrita e itálica)
   const formatText = (text: string) => {
     if (!text) return "";
@@ -162,8 +283,8 @@ export default function LocalPage() {
       return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${match}</a>`;
     });
 
-    // 2. Bold: **texto** -> <strong>texto</strong>
-    formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    // 2. Bold: *texto* -> <strong>texto</strong>
+    formatted = formatted.replace(/\*([^*]+)\*/g, "<strong>$1</strong>");
 
     // 3. Italics: _texto_ -> <em>texto</em>
     // Usamos un regex que intente no capturar guiones bajos dentro de enlaces o palabras
@@ -342,23 +463,44 @@ export default function LocalPage() {
               </div>
 
               {editingBlockId === block.id ? (
-                <textarea
-                  value={editingContent}
-                  onChange={(e) => setEditingContent(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      // Enter without Shift -> save and exit edit mode
-                      e.preventDefault();
-                      updateBlock(block.id, editingContent);
-                      setEditingBlockId(null);
-                      setEditingContent("");
-                      (e.target as HTMLTextAreaElement).blur();
-                    }
-                    // Shift+Enter should insert newline (default behavior)
-                  }}
-                  placeholder="Escribe aquí..."
-                  className="w-full min-h-[160px] p-3 border border-gray-300 dark:border-gray-600 rounded-md resize-y bg-black text-white focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-pre-wrap break-words break-all overflow-auto"
-                />
+                <div className="relative">
+                  <textarea
+                    value={editingContent}
+                    onChange={(e) => handleTextChange(e, block.id)}
+                    onKeyDown={(e) => handleKeyDown(e, block.id)}
+                    placeholder="Escribe aquí..."
+                    className="w-full min-h-[160px] p-3 border border-gray-300 dark:border-gray-600 rounded-md resize-y bg-black text-white focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-pre-wrap break-words break-all overflow-auto"
+                  />
+                  {showEmojiPicker && filteredEmojis.length > 0 && (
+                    <div
+                      className="absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden min-w-[200px]"
+                      style={{
+                        top: emojiCoords.top,
+                        left: emojiCoords.left
+                      }}
+                    >
+                      <ul className="max-h-[200px] overflow-y-auto">
+                        {filteredEmojis.map((item, idx) => (
+                          <li
+                            key={item.symbol + idx}
+                            className={`px-3 py-2 flex items-center gap-2 cursor-pointer text-sm ${idx === emojiSelectedIndex
+                              ? "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-100"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              }`}
+                            onClick={() => insertEmoji(item)}
+                            onMouseEnter={() => setEmojiSelectedIndex(idx)}
+                          >
+                            <span className="text-xl">{item.symbol}</span>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{item.description.es.main}</span>
+                              <span className="text-xs opacity-60">:{item.description.en.main.toLowerCase().replace(/\s+/g, '_')}:</span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div
                   className="w-full min-h-[160px] p-3 border border-gray-300 dark:border-gray-600 rounded-md resize-y bg-white dark:bg-gray-800 text-black dark:text-white whitespace-pre-wrap break-words break-all overflow-auto"
@@ -399,6 +541,100 @@ export default function LocalPage() {
       >
         <Github className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors" />
       </a>
+
+      <a
+        href="https://emojis.gonzalogramagia.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-8 left-8 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group z-50"
+        aria-label="Emojis Site"
+      >
+        <Smile className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
+      </a>
     </section>
   );
+}
+
+// Utility to get caret coordinates
+function getCaretCoordinates(element: HTMLTextAreaElement, position: number) {
+  const {
+    offsetLeft: elementLeft,
+    offsetTop: elementTop,
+    scrollLeft,
+    scrollTop,
+  } = element;
+
+  const div = document.createElement("div");
+  const copyStyle = getComputedStyle(element);
+
+  for (const prop of [
+    "direction",
+    "boxSizing",
+    "width",
+    "height",
+    "overflowX",
+    "overflowY",
+    "borderTopWidth",
+    "borderRightWidth",
+    "borderBottomWidth",
+    "borderLeftWidth",
+    "paddingTop",
+    "paddingRight",
+    "paddingBottom",
+    "paddingLeft",
+    "fontStyle",
+    "fontVariant",
+    "fontWeight",
+    "fontStretch",
+    "fontSize",
+    "fontSizeAdjust",
+    "lineHeight",
+    "fontFamily",
+    "textAlign",
+    "textTransform",
+    "textIndent",
+    "textDecoration",
+    "letterSpacing",
+    "wordSpacing",
+  ]) {
+    div.style[prop as any] = copyStyle[prop as any];
+  }
+
+  div.style.position = "absolute";
+  div.style.top = "0px";
+  div.style.left = "0px";
+  div.style.visibility = "hidden";
+  div.style.whiteSpace = "pre-wrap";
+  div.style.width = `${element.clientWidth}px`;
+
+  div.textContent = element.value.substring(0, position);
+
+  const span = document.createElement("span");
+  span.textContent = element.value.substring(position) || ".";
+  div.appendChild(span);
+
+  document.body.appendChild(div);
+
+  const spanOffset = {
+    top: span.offsetTop + parseInt(copyStyle.borderTopWidth),
+    left: span.offsetLeft + parseInt(copyStyle.borderLeftWidth),
+    height: parseInt(copyStyle.lineHeight) || 20 // fallback line height
+  };
+
+  document.body.removeChild(div);
+
+  // Note: We are calculating relative to the textarea. 
+  // If the textarea is scrolled, we need to account for that logic in the parent or here.
+  // Actually, this simple version returns coordinates RELATIVE TO THE ELEMENT (content box + padding).
+  // BUT the picker is `absolute` inside `relative` container of textarea.
+  // So we just need `span.offsetTop` and `span.offsetLeft` mostly.
+  // We subtract scrollTop to keep it pinned if we want, or if it is inside the scrollable area... 
+  // Wait, the textarea scrolls. If the picker is absolute *over* the textarea, it should move?
+  // If we position it relative to the parent div (which is the textarea wrapper), we need to account for textarea scroll.
+
+  return {
+    top: span.offsetTop - element.scrollTop,
+    left: span.offsetLeft - element.scrollLeft,
+    height: spanOffset.height
+  };
 }
