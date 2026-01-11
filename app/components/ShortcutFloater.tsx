@@ -33,7 +33,7 @@ export default function ShortcutFloater() {
         confirm: isEnglish ? 'Sure?' : 'Seguro?',
         cancel: isEnglish ? 'Cancel' : 'Cancelar',
         save: isEnglish ? 'Save' : 'Guardar',
-        addTooltip: isEnglish ? 'Add shortcut' : 'Agregar atajo',
+        addTooltip: isEnglish ? 'Add' : 'Añadir nuevo atajo',
         editTooltip: isEnglish ? 'Edit' : 'Editar',
         searchIconTooltip: isEnglish ? 'Search icon on Google' : 'Buscar icono en Google'
     }
@@ -115,6 +115,21 @@ export default function ShortcutFloater() {
         setIsModalOpen(false)
     }
 
+    const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value
+        setUrl(val)
+
+        // Simple domain extraction to try and get favicon
+        try {
+            // Prepend https if needed for the URL object to work, though we clean it on submit
+            const urlObj = new URL(val.startsWith('http') ? val : `https://${val}`)
+            const domain = urlObj.hostname
+            setIconUrl(`https://www.google.com/s2/favicons?sz=64&domain=${domain}`)
+        } catch (e) {
+            // Invalid URL yet, ignore
+        }
+    }
+
     const handleDelete = () => {
         if (editingId) {
             if (!confirmDelete) {
@@ -143,6 +158,17 @@ export default function ShortcutFloater() {
                     key={side}
                     className={`fixed top-4 ${side === 'left' ? 'left-4' : 'right-4'} flex items-center gap-2 z-50`}
                 >
+                    {/* Add Button - Left only for 'left' side */}
+                    {side === 'left' && (
+                        <button
+                            onClick={() => handleOpenModal(side)}
+                            className="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm opacity-50 hover:opacity-100 transition-all hover:scale-105 cursor-pointer"
+                            title={t.addTooltip}
+                        >
+                            <Plus size={16} className="text-zinc-600 dark:text-zinc-400" />
+                        </button>
+                    )}
+
                     {shortcuts.filter(s => s.position === side).map(shortcut => (
                         <div
                             key={shortcut.id}
@@ -187,14 +213,16 @@ export default function ShortcutFloater() {
                         </div>
                     ))}
 
-                    {/* Add Button */}
-                    <button
-                        onClick={() => handleOpenModal(side)}
-                        className="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm opacity-50 hover:opacity-100 transition-all hover:scale-105 cursor-pointer"
-                        title={t.addTooltip}
-                    >
-                        <Plus size={16} className="text-zinc-600 dark:text-zinc-400" />
-                    </button>
+                    {/* Add Button - Right only for 'right' side */}
+                    {side === 'right' && (
+                        <button
+                            onClick={() => handleOpenModal(side)}
+                            className="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm opacity-50 hover:opacity-100 transition-all hover:scale-105 cursor-pointer"
+                            title={t.addTooltip}
+                        >
+                            <Plus size={16} className="text-zinc-600 dark:text-zinc-400" />
+                        </button>
+                    )}
                 </div>
             ))}
 
@@ -235,7 +263,6 @@ export default function ShortcutFloater() {
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
-
                                         value={iconUrl}
                                         onChange={e => setIconUrl(e.target.value)}
                                         className="flex-1 px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-500"
@@ -261,7 +288,7 @@ export default function ShortcutFloater() {
                                     type="text"
                                     required
                                     value={url}
-                                    onChange={e => setUrl(e.target.value)}
+                                    onChange={handleUrlChange}
                                     className="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-500"
                                     placeholder="https://chat.openai.com"
                                 />
