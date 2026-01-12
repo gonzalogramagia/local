@@ -17,6 +17,8 @@ export interface Dictionary {
     ariaDeleteSpecific: string;
     ariaGithub: string;
     ariaEmojis: string;
+    moveUp: string;
+    moveDown: string;
 }
 
 export const dictionary: Record<Language, Dictionary> = {
@@ -37,6 +39,8 @@ export const dictionary: Record<Language, Dictionary> = {
         ariaDeleteSpecific: "Eliminar",
         ariaGithub: "Repositorio de GitHub",
         ariaEmojis: "Sitio de Emojis",
+        moveUp: "Mover Arriba",
+        moveDown: "Mover Abajo",
     },
     en: {
         title: "Note Blocks",
@@ -55,5 +59,7 @@ export const dictionary: Record<Language, Dictionary> = {
         ariaDeleteSpecific: "Delete",
         ariaGithub: "GitHub Repository",
         ariaEmojis: "Emojis Site",
+        moveUp: "Move Up",
+        moveDown: "Move Down",
     },
 };

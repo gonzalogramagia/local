@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Pencil, Trash2, Save, Check, Github, Smile } from "lucide-react";
+import { Copy, Pencil, Trash2, Save, Check, Github, Smile, ChevronUp, ChevronDown } from "lucide-react";
 import { symbols, SymbolItem } from "../data/symbols";
 import { dictionary, Language } from "../data/i18n";
 
@@ -23,6 +23,7 @@ export default function NoteApp({ lang }: NoteAppProps) {
     const [editingContent, setEditingContent] = useState("");
     const [copiedBlockId, setCopiedBlockId] = useState<string | null>(null);
     const [deletingBlockId, setDeletingBlockId] = useState<string | null>(null);
+    const [justMovedId, setJustMovedId] = useState<string | null>(null);
 
     // Emoji Picker State
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -155,6 +156,17 @@ export default function NoteApp({ lang }: NoteAppProps) {
         const current = blocks.find((b) => b.id === editingBlockId);
         if (current) updateBlock(current.id, editingContent);
     };
+
+    // Scroll to moved block
+    useEffect(() => {
+        if (justMovedId) {
+            const element = document.querySelector(`[data-block-id="${justMovedId}"]`);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+            setJustMovedId(null);
+        }
+    }, [blocks, justMovedId]);
 
     // --- Emoji Picker Logic ---
     useEffect(() => {
@@ -309,6 +321,32 @@ export default function NoteApp({ lang }: NoteAppProps) {
         }
     };
 
+    const moveBlockUp = (id: string) => {
+        const index = blocks.findIndex((b) => b.id === id);
+        if (index < 0 || index >= blocks.length - 1) return;
+
+        const newBlocks = [...blocks];
+        [newBlocks[index], newBlocks[index + 1]] = [
+            newBlocks[index + 1],
+            newBlocks[index],
+        ];
+        setBlocks(newBlocks);
+        setJustMovedId(id);
+    };
+
+    const moveBlockDown = (id: string) => {
+        const index = blocks.findIndex((b) => b.id === id);
+        if (index <= 0) return;
+
+        const newBlocks = [...blocks];
+        [newBlocks[index], newBlocks[index - 1]] = [
+            newBlocks[index - 1],
+            newBlocks[index],
+        ];
+        setBlocks(newBlocks);
+        setJustMovedId(id);
+    };
+
     // Determine external URL for emojis
     const emojisUrl = lang === "en"
         ? "https://emojis.gonzalogramagia.com/en"
@@ -343,7 +381,7 @@ export default function NoteApp({ lang }: NoteAppProps) {
                         <div
                             key={block.id}
                             data-block-id={block.id}
-                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 pb-2"
                         >
                             <div className="flex justify-between items-center mb-2 gap-3">
                                 <input
@@ -504,11 +542,33 @@ export default function NoteApp({ lang }: NoteAppProps) {
                                     dangerouslySetInnerHTML={{ __html: formatText(block.content) }}
                                 />
                             )}
-                            <div className="text-xs text-gray-400 mt-2">
-                                {editingBlockId === block.id
-                                    ? editingContent.length
-                                    : block.content.length}{" "}
-                                {t.characters}
+                            <div className="flex justify-between items-center mt-2">
+                                <div className="text-xs text-gray-400">
+                                    {editingBlockId === block.id
+                                        ? editingContent.length
+                                        : block.content.length}{" "}
+                                    {t.characters}
+                                </div>
+                                {blocks.length > 1 && (
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => moveBlockDown(block.id)}
+                                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default p-1"
+                                            disabled={blocks.findIndex(b => b.id === block.id) <= 0}
+                                            title={t.moveDown || "Move Down"}
+                                        >
+                                            <ChevronDown size={20} />
+                                        </button>
+                                        <button
+                                            onClick={() => moveBlockUp(block.id)}
+                                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default p-1"
+                                            disabled={blocks.findIndex(b => b.id === block.id) >= blocks.length - 1}
+                                            title={t.moveUp || "Move Up"}
+                                        >
+                                            <ChevronUp size={20} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

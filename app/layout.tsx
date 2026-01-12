@@ -11,7 +11,7 @@ const baseUrl = 'https://local.gonzalogramagia.com'
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'Local',
+    default: 'Local Storage',
     template: '%s | Local',
   },
   description: 'Herramienta para crear notas en localhost.',
