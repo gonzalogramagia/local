@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Plus, Trash2, Check, Square, CheckSquare } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
@@ -16,8 +16,11 @@ export default function DailyTasks() {
     const [inputValue, setInputValue] = useState('')
     const [urlValue, setUrlValue] = useState('')
     const [mounted, setMounted] = useState(false)
+    const [isAdding, setIsAdding] = useState(false)
+    const [deletingId, setDeletingId] = useState<string | null>(null)
     const pathname = usePathname()
     const isEnglish = pathname?.startsWith('/en')
+    const containerRef = useRef<HTMLDivElement>(null)
 
     // Helper to get Argentina date string YYYY-MM-DD
     const getArgentinaDate = () => {
@@ -28,6 +31,22 @@ export default function DailyTasks() {
             day: '2-digit'
         })
     }
+
+    // Close form when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsAdding(false)
+            }
+        }
+
+        if (isAdding) {
+            document.addEventListener('click', handleClickOutside)
+        }
+        return () => {
+            document.removeEventListener('click', handleClickOutside)
+        }
+    }, [isAdding])
 
     useEffect(() => {
         setMounted(true)
@@ -84,6 +103,7 @@ export default function DailyTasks() {
         setTasks([...tasks, newTask])
         setInputValue('')
         setUrlValue('')
+        setIsAdding(false)
     }
 
     const toggleTask = (id: string) => {
@@ -92,26 +112,43 @@ export default function DailyTasks() {
         ))
     }
 
-    const deleteTask = (id: string) => {
-        setTasks(tasks.filter(t => t.id !== id))
+    const confirmDelete = (id: string) => {
+        if (deletingId === id) {
+            if (id === 'cancel-form') {
+                setIsAdding(false)
+            } else {
+                setTasks(tasks.filter(t => t.id !== id))
+            }
+            setDeletingId(null)
+        } else {
+            setDeletingId(id)
+        }
     }
 
     if (!mounted) return null
 
     return (
-        <div className="fixed left-4 top-48 z-40 hidden xl:flex flex-col gap-4 w-64">
+        <div ref={containerRef} className="fixed left-4 top-48 z-40 hidden xl:flex flex-col gap-4 w-64">
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-lg p-4 transition-all">
-                <h3 className="font-medium text-zinc-900 dark:text-zinc-100 mb-3 text-sm flex items-center justify-start gap-2 relative group w-max cursor-default">
-                    <span>{isEnglish ? 'Daily Tasks' : 'Tareas Diarias'}</span>
-                    <span className="text-base select-none">
-                        🕒
-                    </span>
-                    <div className="absolute left-full ml-2 top-0 -translate-y-[10%] w-max bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-0 z-50">
-                        {isEnglish ? 'Resets at 23:59' : 'Se resetean a las 23:59'}
-                    </div>
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-medium text-zinc-900 dark:text-zinc-100 text-sm flex items-center justify-start gap-2 relative group w-max cursor-default">
+                        <span>{isEnglish ? 'Daily Tasks' : 'Tareas Diarias'}</span>
+                        <span className="text-base select-none">
+                            🕒
+                        </span>
+                        <div className="absolute left-full ml-2 top-0 -translate-y-[10%] w-max bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-0 z-50">
+                            {isEnglish ? 'Resets at 23:59' : 'Se resetean a las 23:59'}
+                        </div>
+                    </h3>
+                    <button
+                        onClick={() => setIsAdding(!isAdding)}
+                        className={`p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer ${isAdding ? 'invisible' : ''}`}
+                    >
+                        <Plus size={16} className="text-zinc-500" />
+                    </button>
+                </div>
 
-                <div className="space-y-2 max-h-[60vh] overflow-y-auto mb-3 custom-scrollbar">
+                <div className={`space-y-2 max-h-[60vh] overflow-y-auto mb-3 custom-scrollbar transition-opacity duration-200 ${isAdding ? 'opacity-50 pointer-events-none' : ''}`}>
                     {tasks.map(task => (
                         <div key={task.id} className="group flex items-center gap-2 text-sm">
                             <button
@@ -135,12 +172,14 @@ export default function DailyTasks() {
                                     task.text
                                 )}
                             </span>
-                            <button
-                                onClick={() => deleteTask(task.id)}
-                                className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all p-1 cursor-pointer"
-                            >
-                                <Trash2 size={14} />
-                            </button>
+                            {!isAdding && (
+                                <button
+                                    onClick={() => confirmDelete(task.id)}
+                                    className={`opacity-0 group-hover:opacity-100 transition-all p-1 cursor-pointer ${deletingId === task.id ? 'text-red-500 opacity-100' : 'text-zinc-400 hover:text-red-500'}`}
+                                >
+                                    {deletingId === task.id ? <Check size={14} /> : <Trash2 size={14} />}
+                                </button>
+                            )}
                         </div>
                     ))}
 
@@ -151,31 +190,41 @@ export default function DailyTasks() {
                     )}
                 </div>
 
-                <form onSubmit={addTask} className="flex flex-col gap-2">
-                    <div className="flex gap-2">
+                {isAdding && (
+                    <form onSubmit={addTask} className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                placeholder={isEnglish ? 'Add task...' : 'Agregar tarea...'}
+                                autoFocus
+                                className="flex-1 bg-zinc-50 dark:bg-zinc-800 border-none rounded text-xs px-2 py-1.5 focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-600 outline-none text-zinc-800 dark:text-zinc-200"
+                            />
+                            <button
+                                type="submit"
+                                disabled={!inputValue.trim()}
+                                className="bg-black dark:bg-white text-white dark:text-black rounded p-1.5 hover:opacity-80 disabled:opacity-50 transition-opacity cursor-pointer"
+                            >
+                                <Plus size={14} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => confirmDelete('cancel-form')}
+                                className={`rounded p-1.5 transition-colors cursor-pointer ${deletingId === 'cancel-form' ? 'bg-red-100 text-red-500 dark:bg-red-900/20 dark:text-red-400' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400'}`}
+                            >
+                                {deletingId === 'cancel-form' ? <Check size={14} /> : <Trash2 size={14} />}
+                            </button>
+                        </div>
                         <input
                             type="text"
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            placeholder={isEnglish ? 'Add task...' : 'Agregar tarea...'}
-                            className="flex-1 bg-zinc-50 dark:bg-zinc-800 border-none rounded text-xs px-2 py-1.5 focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-600 outline-none text-zinc-800 dark:text-zinc-200"
+                            value={urlValue}
+                            onChange={(e) => setUrlValue(e.target.value)}
+                            placeholder={isEnglish ? 'Optional URL...' : 'URL opcional...'}
+                            className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded text-xs px-2 py-1.5 focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-600 outline-none text-zinc-800 dark:text-zinc-200 text-xs"
                         />
-                        <button
-                            type="submit"
-                            disabled={!inputValue.trim()}
-                            className="bg-black dark:bg-white text-white dark:text-black rounded p-1.5 hover:opacity-80 disabled:opacity-50 transition-opacity cursor-pointer"
-                        >
-                            <Plus size={14} />
-                        </button>
-                    </div>
-                    <input
-                        type="text"
-                        value={urlValue}
-                        onChange={(e) => setUrlValue(e.target.value)}
-                        placeholder={isEnglish ? 'Optional URL...' : 'URL opcional...'}
-                        className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded text-xs px-2 py-1.5 focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-600 outline-none text-zinc-800 dark:text-zinc-200 text-xs"
-                    />
-                </form>
+                    </form>
+                )}
             </div>
         </div>
     )
