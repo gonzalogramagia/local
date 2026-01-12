@@ -6,7 +6,7 @@ import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 
-const baseUrl = 'https://local.gonzalogramagia.com'
+const baseUrl = 'https://home.gonzalogramagia.com'
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),

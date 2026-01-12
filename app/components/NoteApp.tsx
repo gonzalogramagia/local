@@ -311,7 +311,18 @@ export default function NoteApp({ lang }: NoteAppProps) {
 
     const deleteBlock = (id: string) => {
         if (deletingBlockId === id) {
-            setBlocks((prev) => prev.filter((block) => block.id !== id));
+            setBlocks((prev) => {
+                const remaining = prev.filter((block) => block.id !== id);
+                if (remaining.length === 0) {
+                    return [{
+                        id: generateId(),
+                        tag: generateId(),
+                        title: "",
+                        content: "",
+                    }];
+                }
+                return remaining;
+            });
             setDeletingBlockId(null);
         } else {
             setDeletingBlockId(id);
@@ -352,25 +363,68 @@ export default function NoteApp({ lang }: NoteAppProps) {
         ? "https://emojis.gonzalogramagia.com/en"
         : "https://emojis.gonzalogramagia.com";
 
+    // Clock State
+    const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+    useEffect(() => {
+        setCurrentTime(new Date());
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // Format helpers
+    const formatTime = (date: Date) => {
+        return date.toLocaleTimeString(lang === 'es' ? 'es-AR' : 'en-US', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    };
+
+    const formatDate = (date: Date) => {
+        return date.toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
     return (
         <section className="mb-8">
             <div className="mb-8">
-                <h1 className="mb-4 text-2xl font-semibold tracking-tighter">
-                    {t.title}
-                </h1>
-                <p
-                    className="mb-6 text-gray-600 dark:text-gray-400"
-                    dangerouslySetInnerHTML={{ __html: t.subtitle }}
-                />
+                {/* Clock and Date */}
+                <div className="flex flex-col gap-0.5 -mt-8 mb-12 animate-in fade-in duration-700">
+                    {currentTime && (
+                        <>
+                            <span className="font-mono text-4xl sm:text-5xl font-black tracking-tighter text-zinc-900 dark:text-white leading-none">
+                                {formatTime(currentTime)}
+                            </span>
+                            <span className="text-lg sm:text-xl text-zinc-500 dark:text-zinc-400 font-medium capitalize">
+                                {formatDate(currentTime)}
+                            </span>
+                        </>
+                    )}
+                </div>
 
-                <div className="flex gap-4 mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                    <h1 className="text-2xl font-semibold tracking-tighter">
+                        {t.title}
+                    </h1>
                     <button
                         onClick={addBlock}
-                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors cursor-pointer"
+                        className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors cursor-pointer"
                     >
                         {t.addBlock}
                     </button>
                 </div>
+                <p
+                    className="mb-8 text-gray-600 dark:text-gray-400"
+                    dangerouslySetInnerHTML={{ __html: t.subtitle }}
+                />
             </div>
 
             <div className="space-y-4">
@@ -577,7 +631,7 @@ export default function NoteApp({ lang }: NoteAppProps) {
             {/* Right Side Buttons: Github */}
             <div className="fixed bottom-8 right-8 flex gap-3 z-50">
                 <a
-                    href="https://github.com/gonzalogramagia/local"
+                    href="https://github.com/gonzalogramagia/home"
                     className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group"
                     aria-label={t.ariaGithub}
                 >
@@ -587,14 +641,14 @@ export default function NoteApp({ lang }: NoteAppProps) {
 
             {/* Left Side Buttons: Home + Emojis + Music + ClickUp */}
             <div className="fixed bottom-8 left-8 flex gap-3 z-50">
-                <a
-                    href={lang === "en" ? "https://home.gonzalogramagia.com/en" : "https://home.gonzalogramagia.com"}
-                    className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group cursor-pointer"
+                <button
+                    disabled
+                    className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg transition-all opacity-50 cursor-not-allowed group"
                     aria-label={t.ariaHome}
                     title={t.ariaHome}
                 >
-                    <Home className="w-6 h-6 text-zinc-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
-                </a>
+                    <Home className="w-6 h-6 text-zinc-900 dark:text-white transition-colors" />
+                </button>
                 <a
                     href={emojisUrl}
                     className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group"
