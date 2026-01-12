@@ -173,8 +173,25 @@ export default function ShortcutFloater() {
 
     const sides: Position[] = ['left', 'right']
 
+    const handleShortcutClick = (e: React.MouseEvent, shortcut: Shortcut) => {
+        e.preventDefault()
+
+        const screenWidth = window.screen.availWidth
+        const screenHeight = window.screen.availHeight
+
+        const width = Math.round(screenWidth / 2)
+        const height = Math.round(screenHeight)
+
+        const left = shortcut.position === 'left' ? 0 : width
+        const top = 0
+
+        const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes,popup=yes`
+        window.open(shortcut.url, '_blank', features)
+    }
+
     return (
         <>
+            {/* Split View Iframe Overlay */}
             {sides.map((side) => (
                 <div
                     key={side}
@@ -199,9 +216,11 @@ export default function ShortcutFloater() {
                             {/* Main Icon Button */}
                             <a
                                 href={shortcut.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                onClick={(e) => handleShortcutClick(e, shortcut)}
                                 className="w-full h-full p-1 flex items-center justify-center rounded-full cursor-pointer"
+                                role="button"
+                                tabIndex={0}
+                                draggable="true"
                             >
                                 <img
                                     src={shortcut.iconUrl}
