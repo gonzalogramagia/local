@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Pencil, Trash2, Save, Check, Github, Smile, ChevronUp, ChevronDown } from "lucide-react";
+import { Copy, Pencil, Trash2, Save, Check, Github, Smile, ChevronUp, ChevronDown, Home, Music, BowArrow } from "lucide-react";
 import { symbols, SymbolItem } from "../data/symbols";
 import { dictionary, Language } from "../data/i18n";
 
@@ -574,23 +574,50 @@ export default function NoteApp({ lang }: NoteAppProps) {
                     ))}
             </div>
 
-            <a
-                href="https://github.com/gonzalogramagia/local"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="fixed bottom-8 right-8 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group z-50"
-                aria-label={t.ariaGithub}
-            >
-                <Github className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors" />
-            </a>
+            {/* Right Side Buttons: Github */}
+            <div className="fixed bottom-8 right-8 flex gap-3 z-50">
+                <a
+                    href="https://github.com/gonzalogramagia/local"
+                    className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group"
+                    aria-label={t.ariaGithub}
+                >
+                    <Github className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors" />
+                </a>
+            </div>
 
-            <a
-                href={emojisUrl}
-                className="fixed bottom-8 left-8 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group z-50"
-                aria-label={t.ariaEmojis}
-            >
-                <Smile className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
-            </a>
+            {/* Left Side Buttons: Home + Emojis + Music + ClickUp */}
+            <div className="fixed bottom-8 left-8 flex gap-3 z-50">
+                <a
+                    href={lang === "en" ? "https://home.gonzalogramagia.com/en" : "https://home.gonzalogramagia.com"}
+                    className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group cursor-pointer"
+                    aria-label={t.ariaHome}
+                    title={t.ariaHome}
+                >
+                    <Home className="w-6 h-6 text-zinc-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
+                </a>
+                <a
+                    href={emojisUrl}
+                    className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group"
+                    aria-label={t.ariaEmojis}
+                >
+                    <Smile className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
+                </a>
+                <a
+                    href="https://music.gonzalogramagia.com"
+                    className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group cursor-pointer"
+                    aria-label={t.ariaMusic}
+                    title={t.ariaMusic}
+                >
+                    <Music className="w-6 h-6 text-zinc-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
+                </a>
+                <a
+                    href="https://clickup.gonzalogramagia.com"
+                    className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group cursor-pointer"
+                    aria-label="ClickUp Tools"
+                >
+                    <BowArrow className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
+                </a>
+            </div>
         </section>
     );
 }
