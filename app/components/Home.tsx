@@ -412,7 +412,7 @@ export default function Home({ lang }: HomeProps) {
             <div className="mb-8">
                 {/* Clock and Date */}
                 {currentTime && (
-                    <div className={`flex flex-col items-center justify-center -mt-11 mb-12 animate-in fade-in slide-in-from-top-4 duration-500 transition-opacity ${showClock ? 'opacity-100' : 'opacity-0 select-none pointer-events-none'}`}>
+                    <div className={`flex flex-col items-center justify-center mt-4 sm:-mt-11 mb-12 animate-in fade-in slide-in-from-top-4 duration-500 transition-opacity ${showClock ? 'opacity-100' : 'opacity-0 select-none pointer-events-none'}`}>
                         <span className="text-6xl font-black font-mono tracking-tighter text-zinc-900 dark:text-white leading-none cursor-default select-none hover:scale-105 transition-transform">
                             {formatTime(currentTime)}
                         </span>

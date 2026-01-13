@@ -51,10 +51,10 @@ export default function ConfigModal({ lang, onClose, toggleLanguage, exportPath,
     };
 
     return (
-        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
             <div className="absolute inset-0" onClick={onClose}></div>
 
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm relative z-50 animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm relative z-[70] animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
                         <Wrench className="w-5 h-5 scale-x-[-1]" />
