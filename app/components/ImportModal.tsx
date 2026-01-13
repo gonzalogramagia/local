@@ -203,8 +203,8 @@ export default function ImportModal({ lang }: ImportModalProps) {
                                             key={key}
                                             onClick={() => available && toggle(key as keyof typeof selected)}
                                             className={`flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 transition-colors ${available
-                                                    ? 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
-                                                    : 'opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-zinc-900'
+                                                ? 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+                                                : 'opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-zinc-900'
                                                 }`}
                                         >
                                             <div className={`${selected[key as keyof typeof selected] ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-300 dark:text-zinc-600'}`}>

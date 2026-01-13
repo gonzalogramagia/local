@@ -48,6 +48,19 @@ export default function DailyTasks() {
         }
     }, [isAdding])
 
+    const [isVisible, setIsVisible] = useState(true)
+
+    useEffect(() => {
+        const checkVisibility = () => {
+            const saved = localStorage.getItem('config-show-tasks')
+            setIsVisible(saved !== 'false')
+        }
+
+        checkVisibility()
+        window.addEventListener('config-update', checkVisibility)
+        return () => window.removeEventListener('config-update', checkVisibility)
+    }, [])
+
     useEffect(() => {
         setMounted(true)
         const savedTasks = localStorage.getItem('daily-tasks')
@@ -124,7 +137,7 @@ export default function DailyTasks() {
     if (!mounted) return null
 
     return (
-        <div ref={containerRef} className="fixed left-4 top-48 z-40 hidden xl:flex flex-col gap-4 w-64">
+        <div ref={containerRef} className={`fixed left-4 top-48 z-40 hidden xl:flex flex-col gap-4 w-64 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none select-none'}`}>
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-lg p-4 transition-all">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="font-medium text-zinc-900 dark:text-zinc-100 text-sm flex items-center justify-start gap-2 relative group w-max cursor-default">

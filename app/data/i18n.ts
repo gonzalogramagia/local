@@ -29,7 +29,7 @@ export interface Dictionary {
 
 export const dictionary: Record<Language, Dictionary> = {
     es: {
-        title: "NOTAS",
+        title: "MIS NOTAS",
         subtitle: "Se guardan automáticamente en el <strong>almacenamiento local</strong> de tu navegador",
         addBlock: "Agregar +",
         blockNamePlaceholder: "Nombre de la nota",
@@ -55,7 +55,7 @@ export const dictionary: Record<Language, Dictionary> = {
         goToTasks: "Ir a Tareas",
     },
     en: {
-        title: "NOTES",
+        title: "MY NOTES",
         subtitle: "Automatically saved in your browser's <strong>local storage</strong>",
         addBlock: "Add new +",
         blockNamePlaceholder: "Block Name",

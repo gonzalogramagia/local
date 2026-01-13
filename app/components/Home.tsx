@@ -394,24 +394,35 @@ export default function Home({ lang }: HomeProps) {
         });
     };
 
+    const [showClock, setShowClock] = useState(true);
+
+    useEffect(() => {
+        const checkVisibility = () => {
+            const saved = localStorage.getItem('config-show-clock');
+            setShowClock(saved !== 'false');
+        }
+
+        checkVisibility();
+        window.addEventListener('config-update', checkVisibility);
+        return () => window.removeEventListener('config-update', checkVisibility);
+    }, []);
+
     return (
         <section className="mb-8">
             <div className="mb-8">
                 {/* Clock and Date */}
-                <div className="flex flex-col gap-0.5 -mt-8 mb-12 animate-in fade-in duration-700">
-                    {currentTime && (
-                        <>
-                            <span className="font-mono text-4xl sm:text-5xl font-black tracking-tighter text-zinc-900 dark:text-white leading-none">
-                                {formatTime(currentTime)}
-                            </span>
-                            <span className="text-lg sm:text-xl text-zinc-500 dark:text-zinc-400 font-medium capitalize">
-                                {formatDate(currentTime)}
-                            </span>
-                        </>
-                    )}
-                </div>
+                {currentTime && (
+                    <div className={`flex flex-col items-center justify-center -mt-8 mb-12 animate-in fade-in slide-in-from-top-4 duration-500 transition-opacity ${showClock ? 'opacity-100' : 'opacity-0 select-none pointer-events-none'}`}>
+                        <span className="text-6xl font-black font-mono tracking-tighter text-zinc-900 dark:text-white leading-none cursor-default select-none hover:scale-105 transition-transform">
+                            {formatTime(currentTime)}
+                        </span>
+                        <span className="text-xl text-zinc-500 dark:text-zinc-400 font-medium capitalize cursor-default select-none">
+                            {formatDate(currentTime)}
+                        </span>
+                    </div>
+                )}
 
-                <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center justify-center gap-4 mb-4">
                     <h1 className="text-2xl font-semibold tracking-tighter">
                         📝
                         <span className="ml-3">{t.title}</span>
@@ -424,7 +435,7 @@ export default function Home({ lang }: HomeProps) {
                     </button>
                 </div>
                 <p
-                    className="mb-8 text-gray-600 dark:text-gray-400"
+                    className="mb-8 text-gray-600 dark:text-gray-400 text-center"
                     dangerouslySetInnerHTML={{ __html: t.subtitle }}
                 />
             </div>

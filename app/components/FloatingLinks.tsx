@@ -1,7 +1,9 @@
-"use client";
-
-import { Github, Home, Smile, Music, BowArrow } from "lucide-react";
+import { useState } from "react";
+import ConfigModal from "./ConfigModal";
+import { Github, Home, Smile, Music, BowArrow, Wrench } from "lucide-react";
 import { dictionary, Language } from "../data/i18n";
+import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface FloatingLinksProps {
     lang: Language;
@@ -9,27 +11,65 @@ interface FloatingLinksProps {
 
 export default function FloatingLinks({ lang }: FloatingLinksProps) {
     const t = dictionary[lang];
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const router = useRouter();
+    const pathname = usePathname();
 
     // Determine external URL for emojis
     const emojisUrl = lang === "en"
         ? "https://emojis.gonzalogramagia.com/en"
         : "https://emojis.gonzalogramagia.com";
 
+    const exportPath = lang === 'en' ? '/export' : '/exportar';
+    const importPath = lang === 'en' ? '/import' : '/importar';
+
+    const toggleLanguage = () => {
+        if (lang === 'en') {
+            const newPath = pathname.replace('/en', '') || '/';
+            router.push(newPath);
+        } else {
+            const newPath = `/en${pathname === '/' ? '' : pathname}`;
+            router.push(newPath);
+        }
+    };
+
     return (
         <>
-            {/* Right Side Buttons: Github */}
+            {/* Right Side Buttons: Config / Github */}
             <div className="fixed bottom-8 right-8 flex gap-3 z-50">
-                <a
-                    href="https://github.com/gonzalogramagia/home"
-                    className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group"
-                    aria-label={t.ariaGithub}
-                >
-                    <Github className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors" />
-                </a>
+                {isSettingsOpen ? (
+                    <a
+                        href="https://github.com/gonzalogramagia/home"
+                        className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group"
+                        aria-label={t.ariaGithub}
+                        target="_blank"
+                    >
+                        <Github className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors" />
+                    </a>
+                ) : (
+                    <button
+                        onClick={() => setIsSettingsOpen(true)}
+                        className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group cursor-pointer"
+                        aria-label="Configuration"
+                    >
+                        <Wrench className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors scale-x-[-1]" />
+                    </button>
+                )}
             </div>
 
+            {/* Settings Modal */}
+            {isSettingsOpen && (
+                <ConfigModal
+                    lang={lang}
+                    onClose={() => setIsSettingsOpen(false)}
+                    toggleLanguage={toggleLanguage}
+                    exportPath={exportPath}
+                    importPath={importPath}
+                />
+            )}
+
             {/* Left Side Buttons: Home + Emojis + Music + Tasks */}
-            <div className="fixed bottom-8 left-8 flex gap-3 z-50">
+            <div className={`fixed bottom-8 left-8 flex gap-3 z-50 transition-opacity duration-300 ${isSettingsOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <button
                     disabled
                     className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg transition-all opacity-50 cursor-not-allowed group"

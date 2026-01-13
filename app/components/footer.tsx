@@ -18,7 +18,7 @@ function ArrowIcon() {
 export default function Footer() {
   return (
     <footer className="mt-[-8px] mb-16">
-      <p className="mt-8 text-neutral-600 dark:text-neutral-300">
+      <p className="mt-8 text-neutral-600 dark:text-neutral-300 text-center">
         © {new Date().getFullYear()} | Mens sana in corpore sano
       </p>
     </footer>

@@ -26,7 +26,7 @@
     - **Emojis**: Fast access to emoji library.
     - **Music**: Direct link to your music layout.
     - **Tasks**: Quick access to project management.
-    - **GitHub**: Source code access.
+    - **Config/GitHub**: Toggle between Settings and Source code.
 - **Fast Access**: All links open instantly in the same tab.
 
 ### 🕒 Time & Focus
@@ -34,10 +34,18 @@
 - **Countdown Timer**: Track time to important events with visual urgency indicators (Yellow/Red).
 - **Mens Sana Footer**: "Mens sana in corpore sano" - A reminder for balance.
 
+### ⚙️ Configuration & Personalization
+- **Centralized Config**: A dedicated modal to manage all your preferences (toggle with Language button).
+- **Feature Toggles**: Customize your dashboard by showing or hiding core modules:
+    - **Clock & Calendar**: Toggle the main time display.
+    - **Daily Tasks**: Show/Hide the daily tasks list.
+    - **Countdown**: Show/Hide the countdown timer.
+- **Smooth Transitions**: All elements fade in/out smoothly to maintain a polished look.
+- **Language Switch**: Instantly toggle between English and Spanish.
+
 ### 💾 Data Backup
 - **Export**: Backup your shortcuts, daily tasks, notes, and countdowns to a JSON file.
 - **Import**: Restore your configuration from a backup file selectively.
-- **Notes Support**: Your smart notes are included in the backup, so you never lose your ideas.
 
 ---
 
