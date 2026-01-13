@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ConfigModal from "./ConfigModal";
 import { Github, Home, Smile, Music, BowArrow, Wrench } from "lucide-react";
 import { dictionary, Language } from "../data/i18n";
@@ -12,6 +12,18 @@ interface FloatingLinksProps {
 export default function FloatingLinks({ lang }: FloatingLinksProps) {
     const t = dictionary[lang];
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+    // Persist modal state across language changes
+    useEffect(() => {
+        const saved = sessionStorage.getItem('config-modal-open');
+        if (saved === 'true') setIsSettingsOpen(true);
+    }, []);
+
+    const setConfigOpen = (open: boolean) => {
+        setIsSettingsOpen(open);
+        sessionStorage.setItem('config-modal-open', String(open));
+    };
+
     const router = useRouter();
     const pathname = usePathname();
 
@@ -48,7 +60,7 @@ export default function FloatingLinks({ lang }: FloatingLinksProps) {
                     </a>
                 ) : (
                     <button
-                        onClick={() => setIsSettingsOpen(true)}
+                        onClick={() => setConfigOpen(true)}
                         className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group cursor-pointer"
                         aria-label="Configuration"
                     >
@@ -61,7 +73,7 @@ export default function FloatingLinks({ lang }: FloatingLinksProps) {
             {isSettingsOpen && (
                 <ConfigModal
                     lang={lang}
-                    onClose={() => setIsSettingsOpen(false)}
+                    onClose={() => setConfigOpen(false)}
                     toggleLanguage={toggleLanguage}
                     exportPath={exportPath}
                     importPath={importPath}
