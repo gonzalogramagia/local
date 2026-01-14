@@ -416,7 +416,7 @@ export default function Home({ lang }: HomeProps) {
                         <span className="text-6xl font-black font-mono tracking-tighter text-zinc-900 dark:text-white leading-none cursor-default select-none hover:scale-105 transition-transform">
                             {formatTime(currentTime)}
                         </span>
-                        <span className="text-xl text-zinc-500 dark:text-zinc-400 font-medium capitalize cursor-default select-none">
+                        <span className="text-lg text-zinc-500 dark:text-zinc-400 font-medium capitalize cursor-default select-none">
                             {formatDate(currentTime)}
                         </span>
                     </div>
@@ -450,7 +450,7 @@ export default function Home({ lang }: HomeProps) {
                             data-block-id={block.id}
                             className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 pb-2"
                         >
-                            <div className="flex justify-between items-center mb-2 gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-3">
                                 <input
                                     type="text"
                                     value={block.title}
@@ -484,13 +484,13 @@ export default function Home({ lang }: HomeProps) {
                                             }
                                         }
                                     }}
-                                    className={`flex-1 text-sm font-medium px-2 py-1 border-b border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 ${editingBlockId === block.id
+                                    className={`w-full sm:flex-1 text-sm font-medium px-2 py-1 border-b border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 ${editingBlockId === block.id
                                         ? "bg-black text-white"
                                         : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                         }`}
                                     placeholder={`${t.blockNamePlaceholder} #${block.tag}...`}
                                 />
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start gap-3">
                                     {editingBlockId !== block.id && (
                                         <button
                                             onClick={() => copyToClipboard(block.id, block.content)}
