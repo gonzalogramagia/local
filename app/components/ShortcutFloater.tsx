@@ -211,7 +211,7 @@ export default function ShortcutFloater() {
             {sides.map((side) => (
                 <div
                     key={side}
-                    className={`fixed top-7 ${side === 'left' ? 'left-8' : 'right-8'} flex items-center gap-2 z-50 transition-opacity duration-300 ${areShortcutsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    className={`fixed top-7 ${side === 'left' ? 'left-8' : 'right-8 hidden sm:flex'} flex items-center gap-2 z-50 transition-opacity duration-300 ${areShortcutsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 >
                     {/* Add Button - Left only for 'left' side */}
                     {side === 'left' && (
