@@ -141,10 +141,10 @@ export default function DailyTasks() {
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-lg p-4 transition-all">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="font-medium text-zinc-900 dark:text-zinc-100 text-sm flex items-center justify-start gap-2 relative group w-max cursor-default">
-                        <span>{isEnglish ? 'Daily Tasks' : 'Tareas Diarias'}</span>
                         <span className="text-base select-none">
                             🕒
                         </span>
+                        <span>{isEnglish ? 'Daily Tasks' : 'Tareas Diarias'}</span>
                         <div className="absolute left-full ml-2 top-0 -translate-y-[10%] w-max bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-0 z-50">
                             {isEnglish ? 'Resets at 23:59' : 'Se resetean a las 23:59'}
                         </div>
@@ -213,7 +213,7 @@ export default function DailyTasks() {
                             <button
                                 type="submit"
                                 disabled={!inputValue.trim()}
-                                className="bg-black dark:bg-white text-white dark:text-black rounded p-1.5 hover:opacity-80 disabled:opacity-50 transition-opacity cursor-pointer"
+                                className="bg-[#6866D6] text-white rounded p-1.5 hover:bg-[#5856c4] disabled:opacity-50 transition-colors cursor-pointer"
                             >
                                 <Plus size={14} />
                             </button>

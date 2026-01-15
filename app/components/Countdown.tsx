@@ -198,7 +198,7 @@ export default function Countdown() {
                                 <button
                                     type="submit"
                                     disabled={!eventName || !targetDate}
-                                    className="bg-black dark:bg-white text-white dark:text-black rounded p-1.5 text-xs hover:opacity-80 disabled:opacity-50 transition-opacity cursor-pointer flex items-center justify-center gap-1"
+                                    className="bg-[#6866D6] text-white rounded p-1.5 text-xs hover:bg-[#5856c4] disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center gap-1"
                                 >
                                     <Timer size={14} />
                                     {isEnglish ? 'Start' : 'Iniciar'}

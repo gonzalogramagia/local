@@ -112,7 +112,7 @@ a.volver-button,
 
 /* Enlaces del home mantienen el color celeste */
 section:not(.prose) a {
-  color: #59A8E7 !important;
+  color: #6866D6 !important;
   text-decoration: none !important;
 }
 

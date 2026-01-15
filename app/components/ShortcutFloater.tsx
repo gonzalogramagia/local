@@ -452,7 +452,7 @@ export default function ShortcutFloater() {
                                             </button>
                                             <button
                                                 type="submit"
-                                                className="px-4 py-2 text-sm text-white bg-black dark:bg-white dark:text-black rounded-md hover:opacity-90 transition-opacity cursor-pointer"
+                                                className="px-4 py-2 text-sm text-white bg-[#6866D6] hover:bg-[#5856c4] rounded-md transition-opacity cursor-pointer"
                                             >
                                                 {t.save}
                                             </button>

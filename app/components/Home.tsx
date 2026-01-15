@@ -270,7 +270,7 @@ export default function Home({ lang }: HomeProps) {
         const urlRegex = /((https?:\/\/|www\.)[\w\-.:/?#@!$&'()*+,;=%~]+)/g;
         formatted = formatted.replace(urlRegex, (match) => {
             const url = match.startsWith("http") ? match : `https://${match}`;
-            return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${match}</a>`;
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-[#6866D6] hover:underline">${match}</a>`;
         });
         // Bold: *texto* -> <strong>texto</strong>
         formatted = formatted.replace(/\*([^*]+)\*/g, "<strong>$1</strong>");
