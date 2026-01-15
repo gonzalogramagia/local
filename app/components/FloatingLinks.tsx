@@ -64,7 +64,7 @@ export default function FloatingLinks({ lang }: FloatingLinksProps) {
                         className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group cursor-pointer"
                         aria-label="Configuration"
                     >
-                        <Wrench className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors scale-x-[-1]" />
+                        <Wrench className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-[#6866D6] transition-colors scale-x-[-1]" />
                     </button>
                 )}
             </div>

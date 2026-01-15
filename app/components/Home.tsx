@@ -170,16 +170,23 @@ export default function Home({ lang }: HomeProps) {
     }, [blocks, justMovedId]);
 
     // --- Emoji Picker Logic ---
+    // Helper function to remove accents for accent-insensitive search
+    const removeAccents = (str: string) => {
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    };
+
     useEffect(() => {
         if (showEmojiPicker) {
+            const normalizedSearch = removeAccents(emojiSearch.toLowerCase());
             const emojis = symbols.filter(
                 (s) =>
-                    s.category === "Emojis" &&
-                    (s.symbol.includes(emojiSearch) ||
-                        s.description.en.main.toLowerCase().includes(emojiSearch.toLowerCase()) ||
-                        s.description.es.main.toLowerCase().includes(emojiSearch.toLowerCase()) ||
-                        s.tags?.en.some(tag => tag.toLowerCase().includes(emojiSearch.toLowerCase())) ||
-                        s.tags?.es.some(tag => tag.toLowerCase().includes(emojiSearch.toLowerCase())))
+                    s.symbol.includes(emojiSearch) ||
+                    removeAccents(s.description.en.main.toLowerCase()).includes(normalizedSearch) ||
+                    removeAccents(s.description.es.main.toLowerCase()).includes(normalizedSearch) ||
+                    s.description.en.secondary?.some(sec => removeAccents(sec.toLowerCase()).includes(normalizedSearch)) ||
+                    s.description.es.secondary?.some(sec => removeAccents(sec.toLowerCase()).includes(normalizedSearch)) ||
+                    s.tags?.en.some(tag => removeAccents(tag.toLowerCase()).includes(normalizedSearch)) ||
+                    s.tags?.es.some(tag => removeAccents(tag.toLowerCase()).includes(normalizedSearch))
             ).slice(0, 10);
             setFilteredEmojis(emojis);
             setEmojiSelectedIndex(0);
