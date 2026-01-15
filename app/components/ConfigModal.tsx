@@ -135,7 +135,7 @@ export default function ConfigModal({ lang, onClose, toggleLanguage, exportPath,
                         </div>
 
                         {/* Tasks Toggle */}
-                        <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                        <div className="hidden sm:flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-white dark:bg-zinc-800 rounded-lg shadow-sm">
                                     {showTasks ? <Eye size={20} className="text-zinc-600 dark:text-zinc-400" /> : <EyeOff size={20} className="text-zinc-400 dark:text-zinc-600" />}
@@ -156,7 +156,7 @@ export default function ConfigModal({ lang, onClose, toggleLanguage, exportPath,
                         </div>
 
                         {/* Countdown Toggle */}
-                        <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                        <div className="hidden sm:flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-white dark:bg-zinc-800 rounded-lg shadow-sm">
                                     {showCountdown ? <Eye size={20} className="text-zinc-600 dark:text-zinc-400" /> : <EyeOff size={20} className="text-zinc-400 dark:text-zinc-600" />}
@@ -183,7 +183,7 @@ export default function ConfigModal({ lang, onClose, toggleLanguage, exportPath,
                                     {showShortcuts ? <Eye size={20} className="text-zinc-600 dark:text-zinc-400" /> : <EyeOff size={20} className="text-zinc-400 dark:text-zinc-600" />}
                                 </div>
                                 <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                                    {lang === 'en' ? 'Shortcuts' : 'Atajos'}
+                                    {lang === 'en' ? 'Navigation Shortcuts' : 'Atajos de Navegación'}
                                 </span>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">

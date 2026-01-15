@@ -197,13 +197,11 @@ export default function ShortcutFloater() {
         const top = 0
 
         const openInTab = localStorage.getItem('config-open-in-new-tab') === 'true'
-        const isMobile = window.matchMedia('(max-width: 640px)').matches
 
-        if (openInTab || isMobile) { // Force new tab on mobile
+        if (openInTab) {
             window.open(shortcut.url, '_blank')
         } else {
-            const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes,popup=yes`
-            window.open(shortcut.url, '_blank', features)
+            window.open(shortcut.url, '_self')
         }
     }
 
