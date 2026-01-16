@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, X, Pencil, Trash2, Search, Image as ImageIcon } from 'lucide-react'
+import { Plus, X, Pencil, Trash2, Search, Image as ImageIcon, Link } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
 type Position = 'left' | 'right'
@@ -44,6 +44,8 @@ export default function ShortcutFloater() {
         { name: 'Trophy', url: 'https://static.vecteezy.com/system/resources/previews/059/907/959/non_2x/trophy-black-illustration-vector.jpg' },
         { name: 'Linux', url: 'https://icon-library.com/images/linux-tux-icon/linux-tux-icon-1.jpg' },
         { name: 'Job', url: 'https://static.vecteezy.com/system/resources/previews/021/839/489/non_2x/recruitment-black-glyph-icon-hiring-process-choosing-candidate-job-position-headhunting-application-silhouette-symbol-on-white-space-solid-pictogram-isolated-illustration-vector.jpg' },
+        { name: 'Link', url: 'https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Fwebstockreview.net%2Fimages%2Flink-icon-png-6.png&sp=1768587931T58fc6a54a4865b8be8a60d5e20fc32b39ad18fdddbbfb451e58c6a57cb39fdd1' },
+        { name: 'Hobby', url: 'https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Fwww.pngplay.com%2Fwp-content%2Fuploads%2F12%2FJoystick-Transparent-File.png&sp=1768588281T8be5368b8511109b3b4a866eb6928bd55eb06f6e60ffd26a4da9cc2e704ed504' },
     ]
 
     const t = {
@@ -58,7 +60,8 @@ export default function ShortcutFloater() {
         save: isEnglish ? 'Save' : 'Guardar',
         addTooltip: isEnglish ? 'Add' : 'Añadir nuevo atajo',
         editTooltip: isEnglish ? 'Edit' : 'Editar',
-        searchIconTooltip: isEnglish ? 'Search icon on Google' : 'Buscar icono en Google'
+        searchIconTooltip: isEnglish ? 'Search icon on Google' : 'Buscar ícono en Google',
+        chooseIconLabel: isEnglish ? 'Icon' : 'Ícono'
     }
 
     // Form state
@@ -217,10 +220,10 @@ export default function ShortcutFloater() {
                     {side === 'left' && (
                         <button
                             onClick={() => handleOpenModal(side)}
-                            className="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm opacity-50 hover:opacity-100 transition-all hover:scale-105 cursor-pointer"
+                            className="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-zinc-200 shadow-sm opacity-50 hover:opacity-100 transition-all hover:scale-105 cursor-pointer"
                             title={t.addTooltip}
                         >
-                            <Plus size={16} className="text-zinc-600 dark:text-zinc-400" />
+                            <Plus size={16} className="text-zinc-600" />
                         </button>
                     )}
 
@@ -228,7 +231,7 @@ export default function ShortcutFloater() {
                         shortcuts.filter(s => s.position === side).map(shortcut => (
                             <div
                                 key={shortcut.id}
-                                className="group relative flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all cursor-pointer overflow-visible"
+                                className="group relative flex items-center justify-center w-10 h-10 rounded-full bg-white border border-zinc-200 shadow-sm hover:shadow-md transition-all cursor-pointer overflow-visible"
                             >
                                 {/* Main Icon Button */}
                                 <a
@@ -269,7 +272,7 @@ export default function ShortcutFloater() {
                     ) : (
                         // Right side - Hardcoded Just Focus
                         <div
-                            className="group relative flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all cursor-pointer overflow-visible"
+                            className="group relative flex items-center justify-center w-10 h-10 rounded-full bg-white border border-zinc-200 shadow-sm hover:shadow-md transition-all cursor-pointer overflow-visible"
                         >
                             <a
                                 href="https://chromewebstore.google.com/detail/just-focus/gefaddaengbodpiobpbgblajdboalmgc"
@@ -301,16 +304,16 @@ export default function ShortcutFloater() {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-xl w-full max-w-md border border-zinc-200 dark:border-zinc-800 p-6 relative">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md border border-zinc-200 p-6 relative">
                         {showIconPicker ? (
                             <>
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-lg font-medium">
-                                        {isEnglish ? 'Select Icon' : 'Seleccionar Icono'}
+                                        {isEnglish ? 'Select Icon' : 'Seleccionar ícono'}
                                     </h2>
                                     <button
                                         onClick={() => setShowIconPicker(false)}
-                                        className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                                        className="text-zinc-400 hover:text-zinc-600 cursor-pointer"
                                     >
                                         <X size={20} />
                                     </button>
@@ -323,7 +326,7 @@ export default function ShortcutFloater() {
                                                 setIconUrl(icon.url)
                                                 setShowIconPicker(false)
                                             }}
-                                            className="group flex flex-col items-center gap-1 p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                                            className="group flex flex-col items-center gap-1 p-2 rounded-md hover:bg-zinc-100 transition-colors cursor-pointer"
                                             title={icon.name}
                                         >
                                             <div className="w-8 h-8 flex items-center justify-center">
@@ -341,78 +344,82 @@ export default function ShortcutFloater() {
                         ) : (
                             <>
                                 <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-lg font-medium">
+                                    <h2 className="text-lg font-medium flex items-center gap-2">
+                                        <Link size={20} />
                                         {editingId ? t.editTitle : t.newTitle}
                                     </h2>
                                     <button
                                         onClick={() => setIsModalOpen(false)}
-                                        className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                                        className="text-zinc-400 hover:text-zinc-600 cursor-pointer"
                                     >
                                         <X size={20} />
                                     </button>
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                                            {t.nameLabel}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={name}
-                                            onChange={e => setName(e.target.value)}
-                                            className="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-500"
-                                            placeholder="Ej: ChatGPT"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                                            {t.iconUrlLabel}
-                                        </label>
-                                        <div className="flex gap-2 items-center">
-                                            <div
-                                                className="w-10 h-10 relative flex-shrink-0 rounded-md overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-600 transition-all flex items-center justify-center group/icon"
-                                                onClick={() => setShowIconPicker(true)}
-                                            >
-                                                {iconUrl ? (
-                                                    <img
-                                                        src={iconUrl}
-                                                        alt="Preview"
-                                                        className="w-full h-full object-contain"
-                                                        onError={(e) => {
-                                                            (e.target as HTMLImageElement).style.display = 'none';
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className="text-zinc-400 group-hover/icon:text-zinc-600 dark:group-hover/icon:text-zinc-200 transition-colors">
-                                                        <ImageIcon size={20} />
-                                                    </div>
-                                                )}
-                                            </div>
-
+                                    <div className="flex gap-3 sm:block sm:space-y-4">
+                                        <div className="flex-1 sm:w-full">
+                                            <label className="block text-sm font-medium text-zinc-700 mb-1">
+                                                {t.nameLabel}
+                                            </label>
                                             <input
                                                 type="text"
-                                                value={iconUrl}
-                                                onChange={e => setIconUrl(e.target.value)}
-                                                className="flex-1 px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-500"
-                                                placeholder="https://example.com/icon.png"
+                                                required
+                                                value={name}
+                                                onChange={e => setName(e.target.value)}
+                                                className="w-full px-3 py-2 rounded-md border border-zinc-300 bg-white focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                                                placeholder="Ej: ChatGPT"
                                             />
-                                            <a
-                                                href={getGoogleImagesUrl()}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="h-10 px-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors flex items-center justify-center cursor-pointer"
-                                                title={t.searchIconTooltip}
-                                            >
-                                                <Search size={18} className="text-zinc-600 dark:text-zinc-400" />
-                                            </a>
+                                        </div>
+
+                                        <div className="w-auto sm:w-full">
+                                            <label className="block text-sm font-medium text-zinc-700 mb-1">
+                                                <span className="sm:hidden">{t.chooseIconLabel}</span>
+                                                <span className="hidden sm:block">{t.iconUrlLabel}</span>
+                                            </label>
+                                            <div className="flex gap-2 items-center">
+                                                <div
+                                                    className="w-10 h-10 relative flex-shrink-0 rounded-md overflow-hidden bg-zinc-100 border border-zinc-200 cursor-pointer hover:ring-2 hover:ring-zinc-400 transition-all flex items-center justify-center group/icon"
+                                                    onClick={() => setShowIconPicker(true)}
+                                                >
+                                                    {iconUrl ? (
+                                                        <img
+                                                            src={iconUrl}
+                                                            alt="Preview"
+                                                            className="w-full h-full object-contain"
+                                                            onError={(e) => {
+                                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <div className="text-zinc-400 group-hover/icon:text-zinc-600 transition-colors">
+                                                            <ImageIcon size={20} />
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <input
+                                                    type="text"
+                                                    value={iconUrl}
+                                                    onChange={e => setIconUrl(e.target.value)}
+                                                    className="hidden sm:block flex-1 px-3 py-2 rounded-md border border-zinc-300 bg-white focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                                                    placeholder="https://example.com/icon.png"
+                                                />
+                                                <a
+                                                    href={getGoogleImagesUrl()}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="hidden sm:flex h-10 px-3 bg-zinc-100 border border-zinc-300 rounded-md hover:bg-zinc-200 transition-colors items-center justify-center cursor-pointer"
+                                                    title={t.searchIconTooltip}
+                                                >
+                                                    <Search size={18} className="text-zinc-600" />
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                        <label className="block text-sm font-medium text-zinc-700 mb-1">
                                             {t.shortcutUrlLabel}
                                         </label>
                                         <input
@@ -420,7 +427,7 @@ export default function ShortcutFloater() {
                                             required
                                             value={url}
                                             onChange={handleUrlChange}
-                                            className="w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                                            className="w-full px-3 py-2 rounded-md border border-zinc-300 bg-white focus:outline-none focus:ring-2 focus:ring-zinc-500"
                                             placeholder="https://chat.openai.com"
                                         />
                                     </div>
@@ -432,7 +439,7 @@ export default function ShortcutFloater() {
                                                 onClick={handleDelete}
                                                 className={`px-4 py-2 text-sm rounded-md transition-colors flex items-center gap-2 cursor-pointer ${confirmDelete
                                                     ? 'bg-red-600 text-white hover:bg-red-700'
-                                                    : 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                                    : 'text-red-600 hover:bg-red-50'
                                                     }`}
                                             >
                                                 <Trash2 size={16} />
@@ -446,7 +453,7 @@ export default function ShortcutFloater() {
                                             <button
                                                 type="button"
                                                 onClick={() => setIsModalOpen(false)}
-                                                className="px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+                                                className="px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors cursor-pointer"
                                             >
                                                 {t.cancel}
                                             </button>

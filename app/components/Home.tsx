@@ -420,10 +420,10 @@ export default function Home({ lang }: HomeProps) {
                 {/* Clock and Date */}
                 {currentTime && (
                     <div className={`flex flex-col items-center justify-center mt-4 lg:-mt-11 mb-12 animate-in fade-in slide-in-from-top-4 duration-500 transition-opacity ${showClock ? 'opacity-100' : 'opacity-0 select-none pointer-events-none'}`}>
-                        <span className="text-6xl font-black font-mono tracking-tighter text-zinc-900 dark:text-white leading-none cursor-default select-none hover:scale-105 transition-transform">
+                        <span className="text-6xl font-black font-mono tracking-tighter text-zinc-900 leading-none cursor-default select-none hover:scale-105 transition-transform">
                             {formatTime(currentTime)}
                         </span>
-                        <span className="text-lg text-zinc-500 dark:text-zinc-400 font-medium capitalize cursor-default select-none">
+                        <span className="text-lg text-zinc-500 font-medium capitalize cursor-default select-none">
                             {formatDate(currentTime)}
                         </span>
                     </div>
@@ -442,7 +442,7 @@ export default function Home({ lang }: HomeProps) {
                     </button>
                 </div>
                 <p
-                    className="mb-8 text-gray-600 dark:text-gray-400 text-center"
+                    className="mb-8 text-gray-600 text-center"
                     dangerouslySetInnerHTML={{ __html: t.subtitle }}
                 />
             </div>
@@ -455,7 +455,7 @@ export default function Home({ lang }: HomeProps) {
                         <div
                             key={block.id}
                             data-block-id={block.id}
-                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 pb-2"
+                            className="border border-gray-200 rounded-lg p-4 pb-2"
                         >
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-3">
                                 <input
@@ -491,9 +491,9 @@ export default function Home({ lang }: HomeProps) {
                                             }
                                         }
                                     }}
-                                    className={`w-full sm:flex-1 text-sm font-medium px-2 py-1 border-b border-gray-200 dark:border-gray-700 focus:outline-none focus:border-blue-500 ${editingBlockId === block.id
+                                    className={`w-full sm:flex-1 text-sm font-medium px-2 py-1 border-b border-gray-200 focus:outline-none focus:border-blue-500 ${editingBlockId === block.id
                                         ? "bg-black text-white"
-                                        : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        : "bg-white text-gray-900"
                                         }`}
                                     placeholder={`${t.blockNamePlaceholder} #${block.tag}...`}
                                 />
@@ -502,8 +502,8 @@ export default function Home({ lang }: HomeProps) {
                                         <button
                                             onClick={() => copyToClipboard(block.id, block.content)}
                                             className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${copiedBlockId === block.id
-                                                ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                                                : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                ? "bg-green-100 text-green-600"
+                                                : "text-gray-500 hover:bg-gray-100"
                                                 }`}
                                             title={t.copy}
                                         >
@@ -523,7 +523,7 @@ export default function Home({ lang }: HomeProps) {
 
                                     <button
                                         onClick={() => toggleEditBlock(block)}
-                                        className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                                        className="flex items-center gap-1 text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer"
                                     >
                                         {editingBlockId === block.id ? (
                                             <>
@@ -542,8 +542,8 @@ export default function Home({ lang }: HomeProps) {
                                         <button
                                             onClick={() => deleteBlock(block.id)}
                                             className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${deletingBlockId === block.id
-                                                ? "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400 font-bold"
-                                                : "text-red-500 hover:text-red-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                ? "bg-red-100 text-red-600 font-bold"
+                                                : "text-red-500 hover:text-red-700 hover:bg-gray-100"
                                                 }`}
                                             aria-label={deletingBlockId === block.id ? t.ariaDelete : `${t.ariaDeleteSpecific} ${block.title}`}
                                         >
@@ -561,12 +561,12 @@ export default function Home({ lang }: HomeProps) {
                                         onChange={(e) => handleTextChange(e, block.id)}
                                         onKeyDown={(e) => handleKeyDown(e, block.id)}
                                         placeholder={t.placeholder}
-                                        className="w-full min-h-[160px] p-3 border border-gray-300 dark:border-gray-600 rounded-md resize-y bg-black text-white focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-pre-wrap break-words overflow-auto"
+                                        className="w-full min-h-[160px] p-3 border border-gray-300 rounded-md resize-y bg-black text-white focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-pre-wrap break-words overflow-auto"
                                     />
                                     {showEmojiPicker && filteredEmojis.length > 0 && (
                                         <div
                                             id="emoji-picker-container"
-                                            className="absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden min-w-[200px]"
+                                            className="absolute z-50 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden min-w-[200px]"
                                             style={{
                                                 top: emojiCoords.top,
                                                 left: emojiCoords.left
@@ -577,8 +577,8 @@ export default function Home({ lang }: HomeProps) {
                                                     <li
                                                         key={item.symbol + idx}
                                                         className={`px-3 py-2 flex items-center gap-2 cursor-pointer text-sm ${idx === emojiSelectedIndex
-                                                            ? "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-100"
-                                                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                            ? "bg-blue-100 text-blue-800"
+                                                            : "text-gray-700 hover:bg-gray-100"
                                                             }`}
                                                         onClick={() => insertEmoji(item)}
                                                         onMouseEnter={() => setEmojiSelectedIndex(idx)}
