@@ -25,7 +25,7 @@ export interface Dictionary {
     goToHome: string;
     goToEmojis: string;
     goToMusic: string;
-    goToTasks: string;
+    goToPlay: string;
 }
 
 export const dictionary: Record<Language, Dictionary> = {
@@ -54,7 +54,7 @@ export const dictionary: Record<Language, Dictionary> = {
         goToHome: "Ya estás acá!",
         goToEmojis: "Ir a Emojis",
         goToMusic: "Ir a Música",
-        goToTasks: "Andá a Entrenar!",
+        goToPlay: "Ir a Jugar",
     },
     en: {
         title: "MY NOTES",
@@ -81,6 +81,6 @@ export const dictionary: Record<Language, Dictionary> = {
         goToHome: "You are here!",
         goToEmojis: "Go to Emojis",
         goToMusic: "Go to Music",
-        goToTasks: "Go Work out!",
+        goToPlay: "Go Play",
     },
 };

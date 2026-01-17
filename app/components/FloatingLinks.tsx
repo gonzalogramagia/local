@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import ConfigModal from "./ConfigModal";
-import { Github, ClipboardClock, Smile, Music, BicepsFlexed, Wrench } from "lucide-react";
+import { Github, ClipboardClock, Smile, Music, Joystick, Wrench } from "lucide-react";
 import { dictionary, Language } from "../data/i18n";
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -36,13 +36,14 @@ export default function FloatingLinks({ lang }: FloatingLinksProps) {
         ? "https://music.gonzalogramagia.com/en"
         : "https://music.gonzalogramagia.com";
 
-    // Determine external URL for training
-    const tasksUrl = lang === "en"
-        ? "https://entrenar.app/en"
-        : "https://entrenar.app";
+    // Determine external URL for play
+    const playUrl = lang === "en"
+        ? "https://play.gonzalogramagia.com/en"
+        : "https://play.gonzalogramagia.com";
 
     const exportPath = lang === 'en' ? '/export' : '/exportar';
     const importPath = lang === 'en' ? '/import' : '/importar';
+
 
     const toggleLanguage = () => {
         if (lang === 'en') {
@@ -116,14 +117,15 @@ export default function FloatingLinks({ lang }: FloatingLinksProps) {
                     <Music className="w-6 h-6 text-zinc-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
                 </a>
                 <a
-                    href={tasksUrl}
+                    href={playUrl}
                     className="hidden sm:block p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group cursor-pointer"
-                    aria-label={t.goToTasks}
-                    title={t.goToTasks}
+                    aria-label={t.goToPlay}
+                    title={t.goToPlay}
                 >
-                    <BicepsFlexed className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
+                    <Joystick className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
                 </a>
             </div>
         </>
     );
 }
+
