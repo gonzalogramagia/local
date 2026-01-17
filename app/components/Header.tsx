@@ -52,7 +52,7 @@ export default function Header({ lang, onAddNote, addNoteText }: HeaderProps) {
     if (!currentTime) return null
 
     return (
-        <div className={`flex flex-col ${showClock ? 'lg:flex-row lg:mb-6' : 'lg:mb-20'} items-center justify-center gap-8 -mt-16 lg:-mt-[5.75rem] -mb-4`}>
+        <div className={`flex flex-col ${showClock ? 'lg:flex-row lg:mb-6 lg:gap-0' : 'lg:mb-20'} items-center justify-center gap-8 -mt-16 lg:-mt-[5.75rem] -mb-4`}>
             {/* Image - Visible on all screens. On mobile it stands alone (replacing clock/calendar which is hidden) */}
             <img
                 src="/notes.png"
@@ -63,8 +63,8 @@ export default function Header({ lang, onAddNote, addNoteText }: HeaderProps) {
             {/* Desktop Content */}
             {showClock ? (
                 /* Clock + Add Button Container - Visible on Desktop when clock is enabled */
-                <div className="hidden lg:flex flex-col items-center justify-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500 transition-opacity">
-                    <div className="flex flex-col items-center justify-start">
+                <div className="hidden lg:flex flex-col items-start justify-center gap-2 -mt-4 -ml-3 animate-in fade-in slide-in-from-top-4 duration-500 transition-opacity">
+                    <div className="flex flex-col items-start justify-start">
                         <span className="text-6xl font-black font-mono tracking-tighter text-zinc-900 leading-none cursor-default select-none hover:scale-105 transition-transform">
                             {formatTime(currentTime)}
                         </span>
