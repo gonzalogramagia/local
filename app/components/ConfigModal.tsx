@@ -1,6 +1,6 @@
 'use client';
 
-import { Wrench, Languages, FileDown, FileUp, X, Eye, EyeOff, ExternalLink, AppWindow, Command } from "lucide-react";
+import { Wrench, Languages, FileDown, FileUp, X, Eye, EyeOff, ExternalLink, AppWindow, Command, Zap } from "lucide-react";
 import Link from 'next/link';
 import { useState, useEffect } from "react";
 import { Language } from "../data/i18n";
@@ -248,6 +248,16 @@ export default function ConfigModal({ lang, onClose, toggleLanguage, exportPath,
                     </Link>
                 </div>
             </div>
+            {/* Moovimiento Link - Visible on all screens when config is open */}
+            <a
+                href="https://mas.moovimiento.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex fixed top-6 right-8 p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group z-[80]"
+                aria-label="Más Moovimiento"
+            >
+                <Zap className="w-6 h-6 text-zinc-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
+            </a>
         </div>
 
     );

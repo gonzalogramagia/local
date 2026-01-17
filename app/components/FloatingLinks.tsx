@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import ConfigModal from "./ConfigModal";
-import { Github, Home, Smile, Music, BicepsFlexed, Wrench } from "lucide-react";
+import { Github, ClipboardClock, Smile, Music, BicepsFlexed, Wrench } from "lucide-react";
 import { dictionary, Language } from "../data/i18n";
 import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 interface FloatingLinksProps {
     lang: Language;
@@ -29,8 +28,18 @@ export default function FloatingLinks({ lang }: FloatingLinksProps) {
 
     // Determine external URL for emojis
     const emojisUrl = lang === "en"
-        ? "https://milemojis.com/en"
-        : "https://milemojis.com";
+        ? "https://emojis.gonzalogramagia.com/en"
+        : "https://emojis.gonzalogramagia.com";
+
+    // Determine external URL for music
+    const musicUrl = lang === "en"
+        ? "https://music.gonzalogramagia.com/en"
+        : "https://music.gonzalogramagia.com";
+
+    // Determine external URL for training
+    const tasksUrl = lang === "en"
+        ? "https://entrenar.app/en"
+        : "https://entrenar.app";
 
     const exportPath = lang === 'en' ? '/export' : '/exportar';
     const importPath = lang === 'en' ? '/import' : '/importar';
@@ -51,7 +60,7 @@ export default function FloatingLinks({ lang }: FloatingLinksProps) {
             <div className="fixed bottom-8 right-8 flex gap-3 z-[70]">
                 {isSettingsOpen ? (
                     <a
-                        href="https://github.com/gonzalogramagia/home"
+                        href="https://github.com/gonzalogramagia/today"
                         className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group"
                         aria-label={t.ariaGithub}
                         target="_blank"
@@ -88,7 +97,7 @@ export default function FloatingLinks({ lang }: FloatingLinksProps) {
                     aria-label={t.goToHome}
                     title={t.goToHome}
                 >
-                    <Home className="w-6 h-6 text-zinc-900 dark:text-white transition-colors" />
+                    <ClipboardClock className="w-6 h-6 text-zinc-900 dark:text-white transition-colors" />
                 </button>
                 <a
                     href={emojisUrl}
@@ -99,7 +108,7 @@ export default function FloatingLinks({ lang }: FloatingLinksProps) {
                     <Smile className="w-6 h-6 text-gray-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
                 </a>
                 <a
-                    href="https://music.gonzalogramagia.com"
+                    href={musicUrl}
                     className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group cursor-pointer"
                     aria-label={t.goToMusic}
                     title={t.goToMusic}
@@ -107,7 +116,7 @@ export default function FloatingLinks({ lang }: FloatingLinksProps) {
                     <Music className="w-6 h-6 text-zinc-900 dark:text-white group-hover:text-yellow-500 transition-colors" />
                 </a>
                 <a
-                    href="https://entrenar.app"
+                    href={tasksUrl}
                     className="hidden sm:block p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group cursor-pointer"
                     aria-label={t.goToTasks}
                     title={t.goToTasks}
