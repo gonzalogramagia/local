@@ -368,8 +368,8 @@ export default function Home({ lang }: HomeProps) {
 
     // Determine external URL for emojis
     const emojisUrl = lang === "en"
-        ? "https://emojis.gonzalogramagia.com/en"
-        : "https://emojis.gonzalogramagia.com";
+        ? "https://milemojis.com/en"
+        : "https://milemojis.com";
 
     // Clock State
     const [currentTime, setCurrentTime] = useState<Date | null>(null);

@@ -29,8 +29,8 @@ export default function FloatingLinks({ lang }: FloatingLinksProps) {
 
     // Determine external URL for emojis
     const emojisUrl = lang === "en"
-        ? "https://emojis.gonzalogramagia.com/en"
-        : "https://emojis.gonzalogramagia.com";
+        ? "https://milemojis.com/en"
+        : "https://milemojis.com";
 
     const exportPath = lang === 'en' ? '/export' : '/exportar';
     const importPath = lang === 'en' ? '/import' : '/importar';
