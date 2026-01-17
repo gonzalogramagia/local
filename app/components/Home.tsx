@@ -401,6 +401,8 @@ export default function Home({ lang }: HomeProps) {
                     lang={lang === 'es' ? 'es' : 'en'}
                     onAddNote={addBlock}
                     addNoteText={t.addBlock}
+                    title={t.title}
+                    mobileAddText={t.addBlockMobile}
                 />
 
                 <div className="flex items-center justify-center gap-4 mb-4 -mt-10 lg:hidden">

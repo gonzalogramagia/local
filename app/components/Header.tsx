@@ -6,9 +6,11 @@ interface HeaderProps {
     lang: 'es' | 'en'
     onAddNote?: () => void
     addNoteText?: string
+    title?: string
+    mobileAddText?: string
 }
 
-export default function Header({ lang, onAddNote, addNoteText }: HeaderProps) {
+export default function Header({ lang, onAddNote, addNoteText, title, mobileAddText }: HeaderProps) {
     const [currentTime, setCurrentTime] = useState<Date | null>(null)
     const [showClock, setShowClock] = useState(true)
 
@@ -83,17 +85,21 @@ export default function Header({ lang, onAddNote, addNoteText }: HeaderProps) {
                     )}
                 </div>
             ) : (
-                /* Button Only - Visible on Desktop when clock is disabled (centered below logo) */
-                onAddNote && (
-                    <div className="hidden lg:block animate-in fade-in slide-in-from-top-4 duration-500 -mt-20">
+                /* Title + Small Button - Visible on Desktop when clock is disabled (mimics mobile layout) */
+                <div className="hidden lg:flex items-center justify-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500 -mt-20">
+                    <h1 className="text-2xl font-semibold tracking-tighter text-black dark:text-white">
+                        📝
+                        <span className="ml-3">{title}</span>
+                    </h1>
+                    {onAddNote && (
                         <button
                             onClick={onAddNote}
-                            className="px-6 py-1 bg-[#6866D6] text-white text-sm font-medium rounded-full hover:bg-[#5856c4] transition-all hover:scale-105 shadow-md cursor-pointer min-w-[200px]"
+                            className="px-3 py-1 bg-[#6866D6] text-white text-sm rounded hover:bg-[#5856c4] transition-colors cursor-pointer"
                         >
-                            {addNoteText || "Agregar otra nota +"}
+                            {mobileAddText || "Agregar +"}
                         </button>
-                    </div>
-                )
+                    )}
+                </div>
             )}
         </div>
     )
