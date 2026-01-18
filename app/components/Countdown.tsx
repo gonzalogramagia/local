@@ -49,17 +49,34 @@ export default function Countdown() {
 
     useEffect(() => {
         setMounted(true)
-        const saved = localStorage.getItem('countdown-event')
-        if (saved) {
-            try {
-                const { name, date } = JSON.parse(saved)
-                setEventName(name)
-                setTargetDate(date)
-                setIsActive(true)
-            } catch (e) {
-                console.error('Failed to parse countdown', e)
+        const loadCountdown = () => {
+            const saved = localStorage.getItem('countdown-event')
+            if (saved) {
+                try {
+                    const { name, date } = JSON.parse(saved)
+                    setEventName(name)
+                    setTargetDate(date)
+                    setIsActive(true)
+                } catch (e) {
+                    console.error('Failed to parse countdown', e)
+                }
+            } else {
+                setIsActive(false)
+                setEventName('')
+                setTargetDate('')
             }
         }
+
+        loadCountdown()
+
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'countdown-event') {
+                loadCountdown()
+            }
+        }
+
+        window.addEventListener('storage', handleStorageChange)
+        return () => window.removeEventListener('storage', handleStorageChange)
     }, [])
 
     useEffect(() => {

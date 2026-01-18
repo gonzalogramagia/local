@@ -83,6 +83,19 @@ export default function DailyTasks() {
         }
 
         setTasks(parsedTasks)
+
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'daily-tasks' && e.newValue) {
+                try {
+                    setTasks(JSON.parse(e.newValue))
+                } catch (err) {
+                    console.error('Failed to sync tasks', err)
+                }
+            }
+        }
+
+        window.addEventListener('storage', handleStorageChange)
+        return () => window.removeEventListener('storage', handleStorageChange)
     }, [])
 
     useEffect(() => {

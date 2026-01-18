@@ -65,6 +65,19 @@ export default function Home({ lang }: HomeProps) {
                 setBlocks(ensured as TextBlock[]);
             }
         }
+
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === "localhost-blocks" && e.newValue) {
+                try {
+                    setBlocks(JSON.parse(e.newValue));
+                } catch (err) {
+                    console.error("Failed to sync blocks", err);
+                }
+            }
+        };
+
+        window.addEventListener("storage", handleStorageChange);
+        return () => window.removeEventListener("storage", handleStorageChange);
     }, []);
 
     // Guardar en localStorage cada vez que cambien los bloques

@@ -71,20 +71,33 @@ export default function ShortcutFloater() {
     const [showIconPicker, setShowIconPicker] = useState(false)
 
     useEffect(() => {
-        const saved = localStorage.getItem('local-shortcuts')
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved)
-                // Migrate existing shortcuts to have a position if missing
-                const migrated = parsed.map((s: any) => ({
-                    ...s,
-                    position: s.position || 'right'
-                }))
-                setShortcuts(migrated)
-            } catch (e) {
-                console.error('Failed to parse shortcuts', e)
+        const loadShortcuts = () => {
+            const saved = localStorage.getItem('local-shortcuts')
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved)
+                    // Migrate existing shortcuts to have a position if missing
+                    const migrated = parsed.map((s: any) => ({
+                        ...s,
+                        position: s.position || 'right'
+                    }))
+                    setShortcuts(migrated)
+                } catch (e) {
+                    console.error('Failed to parse shortcuts', e)
+                }
             }
         }
+
+        loadShortcuts()
+
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'local-shortcuts') {
+                loadShortcuts()
+            }
+        }
+
+        window.addEventListener('storage', handleStorageChange)
+        return () => window.removeEventListener('storage', handleStorageChange)
     }, [])
 
     const saveShortcuts = (newShortcuts: Shortcut[]) => {
