@@ -479,9 +479,9 @@ export default function Home({ lang }: HomeProps) {
                                             }
                                         }
                                     }}
-                                    className={`w-full sm:flex-1 text-sm font-medium px-2 py-1 border-b border-gray-200 focus:outline-none focus:border-blue-500 ${editingBlockId === block.id
+                                    className={`w-full sm:flex-1 text-lg font-semibold px-2 py-1 border-b border-gray-200 focus:outline-none focus:border-blue-500 ${editingBlockId === block.id
                                         ? "bg-black text-white"
-                                        : "bg-white text-gray-900"
+                                        : "bg-transparent text-zinc-900"
                                         }`}
                                     placeholder={`${t.blockNamePlaceholder} #${block.tag}...`}
                                 />
@@ -590,7 +590,7 @@ export default function Home({ lang }: HomeProps) {
                                 </div>
                             ) : (
                                 <div
-                                    className="w-full min-h-[160px] p-3 border border-gray-300 dark:border-gray-600 rounded-md resize-y bg-white dark:bg-gray-800 text-black dark:text-white whitespace-pre-wrap break-words overflow-auto"
+                                    className="w-full min-h-[160px] p-3 border border-gray-300 dark:border-gray-600 rounded-md resize-y bg-[#FEFCE8] dark:bg-zinc-900/50 text-black dark:text-white whitespace-pre-wrap break-words overflow-auto"
                                     onDoubleClick={(e) => {
                                         let node = e.target as HTMLElement | null;
                                         while (node) {
