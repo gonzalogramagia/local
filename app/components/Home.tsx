@@ -398,6 +398,15 @@ export default function Home({ lang }: HomeProps) {
 
     const updateBlockTag = (id: string, userTag: string) => {
         const normalizedTag = userTag.toUpperCase();
+
+        // Inherit block color for new tags
+        if (normalizedTag && !tagColors[normalizedTag]) {
+            const block = blocks.find(b => b.id === id);
+            if (block && block.color) {
+                updateTagColor(normalizedTag, block.color);
+            }
+        }
+
         setBlocks((prev) =>
             prev.map((block) => (block.id === id ? { ...block, userTag: normalizedTag } : block))
         );
@@ -538,10 +547,11 @@ export default function Home({ lang }: HomeProps) {
                                     ringColor: tagColors[tag] || "#FEFCE8"
                                 } as any}
                             >
-                                {selectedTag === tag && (
-                                    <X className="absolute -top-1.5 -right-1 w-3.5 h-3.5 bg-black text-white rounded-full p-0.5 opacity-100 transition-opacity shadow-sm" />
+                                {selectedTag === tag ? (
+                                    <X className="w-3.5 h-3.5 bg-red-500 text-white rounded-full p-0.5 opacity-100 transition-opacity shadow-sm border border-red-600" />
+                                ) : (
+                                    <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: tagColors[tag] || "#FEFCE8" }} />
                                 )}
-                                <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: tagColors[tag] || "#FEFCE8" }} />
                                 #{tag}
                             </button>
                         ))}
