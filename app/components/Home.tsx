@@ -524,7 +524,7 @@ export default function Home({ lang }: HomeProps) {
                                 key={tag}
                                 onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
                                 className={`group relative px-3 py-1 text-xs font-bold rounded-full border cursor-pointer transition-all flex items-center gap-2 uppercase ${selectedTag === tag
-                                    ? "ring-2 ring-offset-1"
+                                    ? "ring-2 ring-offset-1 text-zinc-900 border-black/20"
                                     : "bg-white text-zinc-500 border-zinc-200 hover:border-zinc-400"
                                     }`}
                                 style={{
@@ -534,9 +534,9 @@ export default function Home({ lang }: HomeProps) {
                                 } as any}
                             >
                                 {selectedTag === tag && (
-                                    <X className="absolute -top-1.5 -right-1 w-3.5 h-3.5 bg-black text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm" />
+                                    <X className="absolute -top-1.5 -right-1 w-3.5 h-3.5 bg-black text-white rounded-full p-0.5 opacity-100 transition-opacity shadow-sm" />
                                 )}
-                                <span className="w-2 h-2 rounded-full border border-black/10" style={{ backgroundColor: tagColors[tag] || "#FEFCE8" }} />
+                                <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: tagColors[tag] || "#FEFCE8" }} />
                                 #{tag}
                             </button>
                         ))}
@@ -544,12 +544,13 @@ export default function Home({ lang }: HomeProps) {
                 )}
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
                 {filteredBlocks.map((block) => (
                     <div
                         key={block.id}
                         data-block-id={block.id}
-                        className="border border-gray-200 rounded-lg p-4 pb-2"
+                        className="border border-black/5 rounded-lg p-4 pb-2 transition-colors duration-200"
+                        style={{ backgroundColor: (block.userTag && tagColors[block.userTag]) || block.color || "#FEFCE8" }}
                     >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-3">
                             <input
@@ -575,15 +576,11 @@ export default function Home({ lang }: HomeProps) {
                                         }
                                     }
                                 }}
-                                className={`w-full sm:flex-1 text-lg font-semibold px-2 py-1 border-b border-gray-200 focus:outline-none focus:border-blue-500 rounded-t-md transition-colors ${editingBlockId === block.id
-                                    ? "text-zinc-900"
-                                    : "bg-transparent text-zinc-900"
+                                className={`w-full sm:flex-1 text-lg font-semibold px-2 py-1 border-b focus:outline-none focus:border-blue-500/50 rounded-t-md transition-all ${editingBlockId === block.id
+                                    ? "bg-black/10 border-black/10 text-zinc-900 shadow-sm"
+                                    : "bg-transparent border-transparent text-zinc-900"
                                     }`}
-                                style={{
-                                    backgroundColor: editingBlockId === block.id
-                                        ? ((block.userTag && tagColors[block.userTag]) || block.color || "#FEFCE8")
-                                        : undefined
-                                }}
+                                style={{ borderBottomColor: 'rgba(0,0,0,0.1)' }}
                                 placeholder={`Nota #${block.tag}`}
                             />
                             <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start gap-3 mt-1 sm:mt-0">
@@ -659,7 +656,7 @@ export default function Home({ lang }: HomeProps) {
                                     onChange={(e) => handleTextChange(e, block.id)}
                                     onKeyDown={(e) => handleKeyDown(e, block.id)}
                                     placeholder={t.placeholder}
-                                    className="w-full min-h-[160px] p-3 border border-gray-300 rounded-md resize-y bg-black text-white focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-pre-wrap break-words overflow-auto"
+                                    className="w-full min-h-[160px] p-3 border border-black/10 rounded-md resize-y bg-black/10 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 whitespace-pre-wrap break-words overflow-auto"
                                 />
                                 {showEmojiPicker && filteredEmojis.length > 0 && (
                                     <div
@@ -694,8 +691,8 @@ export default function Home({ lang }: HomeProps) {
                             </div>
                         ) : (
                             <div
-                                className="w-full min-h-[160px] p-3 border border-gray-300 dark:border-gray-600 rounded-md resize-y text-black dark:text-white whitespace-pre-wrap break-words overflow-auto transition-colors duration-200"
-                                style={{ backgroundColor: (block.userTag && tagColors[block.userTag]) || block.color || "#FEFCE8" }}
+                                className="w-full min-h-[160px] p-3 border border-black/5 rounded-md resize-y text-zinc-900 whitespace-pre-wrap break-words overflow-auto transition-colors duration-200"
+                                style={{ backgroundColor: 'transparent' }}
                                 onDoubleClick={(e) => {
                                     let node = e.target as HTMLElement | null;
                                     while (node) {
@@ -751,11 +748,10 @@ export default function Home({ lang }: HomeProps) {
                                     </div>
                                 )}
                                 {editingBlockId !== block.id && block.userTag && (
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/5 text-zinc-500 uppercase tracking-wider border border-black/5 whitespace-nowrap">
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/10 text-zinc-700 uppercase tracking-wider border border-black/10 whitespace-nowrap">
                                         #{block.userTag}
                                     </span>
-                                )
-                                }
+                                )}
                             </div>
 
 
