@@ -375,9 +375,10 @@ export default function Home({ lang }: HomeProps) {
         const newBlock: TextBlock = {
             id,
             tag: blockId,
+            userTag: selectedTag || undefined,
             title: "",
             content: "",
-            color: "#FEFCE8",
+            color: selectedTag ? (tagColors[selectedTag] || "#FEFCE8") : "#FEFCE8",
         };
         setBlocks((prev) => [...prev, newBlock]);
         setCreatedBlockId(id);
@@ -396,9 +397,13 @@ export default function Home({ lang }: HomeProps) {
     };
 
     const updateBlockTag = (id: string, userTag: string) => {
+        const normalizedTag = userTag.toUpperCase();
         setBlocks((prev) =>
-            prev.map((block) => (block.id === id ? { ...block, userTag: userTag.toUpperCase() } : block))
+            prev.map((block) => (block.id === id ? { ...block, userTag: normalizedTag } : block))
         );
+        if (selectedTag && selectedTag !== normalizedTag) {
+            setSelectedTag(null);
+        }
     };
 
     const updateBlockColor = (id: string, color: string) => {
