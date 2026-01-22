@@ -146,7 +146,22 @@ export default function Countdown() {
                                 onEdit={() => startEditing(item)}
                                 isEditing={editingId === item.id}
                             />
-                            {index === 0 && countdowns.length > 1 && (
+                            {editingId === item.id && (
+                                <div className="mt-2">
+                                    <CountdownForm
+                                        formData={formData}
+                                        setFormData={setFormData}
+                                        handleSave={handleSave}
+                                        isEnglish={isEnglish}
+                                        onCancel={() => {
+                                            setEditingId(null)
+                                            setFormData({ name: '', date: '' })
+                                        }}
+                                        isEditing={true}
+                                    />
+                                </div>
+                            )}
+                            {index === 0 && countdowns.length > 1 && !editingId && (
                                 <div className="mt-4 border-t border-zinc-100 dark:border-zinc-800" />
                             )}
                         </div>
@@ -158,45 +173,14 @@ export default function Countdown() {
                         </div>
                     )}
 
-                    {(isCreating || editingId) && (
-                        <form onSubmit={handleSave} className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-200 pt-2">
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                placeholder={isEnglish ? 'Event name...' : 'Nombre del evento...'}
-                                autoFocus
-                                className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded text-xs px-2 py-1.5 focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-600 outline-none text-zinc-800 dark:text-zinc-200"
-                            />
-                            <input
-                                type="datetime-local"
-                                value={formData.date}
-                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded text-xs px-2 py-1.5 focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-600 outline-none text-zinc-800 dark:text-zinc-200"
-                            />
-                            <div className="flex gap-2">
-                                <button
-                                    type="submit"
-                                    disabled={!formData.name || !formData.date}
-                                    className="flex-1 bg-[#6866D6] text-white rounded p-1.5 text-xs hover:bg-[#5856c4] disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center gap-1"
-                                >
-                                    <Timer size={14} />
-                                    {isEnglish ? 'Save' : 'Guardar'}
-                                </button>
-                                {editingId && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setEditingId(null)
-                                            setFormData({ name: '', date: '' })
-                                        }}
-                                        className="p-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-red-500 transition-colors"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                )}
-                            </div>
-                        </form>
+                    {isCreating && (
+                        <CountdownForm
+                            formData={formData}
+                            setFormData={setFormData}
+                            handleSave={handleSave}
+                            isEnglish={isEnglish}
+                            isEditing={false}
+                        />
                     )}
                 </div>
             </div>
@@ -237,7 +221,7 @@ function CountdownDisplay({ item, isEnglish, onDelete, onEdit, isEditing }: {
                     setFunMessage(isEnglish ? 'Keep going! 🚀' : 'Seguí así! 🚀')
                 }
 
-                return `${days}d ${hours}h ${minutes}m ${seconds}s`
+                return `${isEnglish ? 'In' : 'En'} ${days}d ${hours}h ${minutes}m ${seconds}s`
             } else {
                 setTimeColor('text-green-500 font-bold')
                 setFunMessage(isEnglish ? 'Enjoy! 🎉🥳' : 'Disfrutá! 🎉🥳')
@@ -250,9 +234,26 @@ function CountdownDisplay({ item, isEnglish, onDelete, onEdit, isEditing }: {
         return () => clearInterval(timer)
     }, [item.date, isEnglish])
 
-    const formattedDate = new Date(item.date).toLocaleString(isEnglish ? 'en-US' : 'es-AR', {
-        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-    })
+    const date = new Date(item.date)
+    const formattedDate = isEnglish
+        ? (() => {
+            const weekday = date.toLocaleString('en-US', { weekday: 'long' })
+            const month = date.toLocaleString('en-US', { month: 'long' })
+            const day = date.getDate()
+            const time = date.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+            return `On ${weekday}, ${month} ${day} at ${time}`
+        })()
+        : (() => {
+            const weekday = date.toLocaleString('es-AR', { weekday: 'long' })
+            const month = date.toLocaleString('es-AR', { month: 'long' })
+            const day = date.getDate()
+            const time = date.toLocaleString('es-AR', { hour: 'numeric', minute: '2-digit', hour12: true })
+
+            const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1)
+            const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1)
+
+            return `El ${capitalizedWeekday} ${day} de ${capitalizedMonth} a las ${time.replace('a. m.', 'a.m.').replace('p. m.', 'p.m.')}`
+        })()
 
     return (
         <div className={`flex flex-col gap-1 relative transition-opacity ${isEditing ? 'opacity-30 pointer-events-none' : ''}`}>
@@ -278,7 +279,7 @@ function CountdownDisplay({ item, isEnglish, onDelete, onEdit, isEditing }: {
             </div>
 
             <div className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-1">
-                {isEnglish ? 'Starts:' : 'Inicia:'} {formattedDate}
+                {formattedDate}
             </div>
 
             <div className={`text-xl font-mono font-bold tracking-tight ${timeColor} transition-colors duration-500`}>
@@ -289,5 +290,52 @@ function CountdownDisplay({ item, isEnglish, onDelete, onEdit, isEditing }: {
                 {funMessage}
             </div>
         </div>
+    )
+}
+
+function CountdownForm({ formData, setFormData, handleSave, isEnglish, onCancel, isEditing }: {
+    formData: { name: string, date: string },
+    setFormData: (data: { name: string, date: string }) => void,
+    handleSave: (e: React.FormEvent) => void,
+    isEnglish: boolean,
+    onCancel?: () => void,
+    isEditing: boolean
+}) {
+    return (
+        <form onSubmit={handleSave} className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-200 pt-2">
+            <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder={isEnglish ? 'Event name...' : 'Nombre del evento...'}
+                autoFocus
+                className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded text-xs px-2 py-1.5 focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-600 outline-none text-zinc-800 dark:text-zinc-200"
+            />
+            <input
+                type="datetime-local"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded text-xs px-2 py-1.5 focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-600 outline-none text-zinc-800 dark:text-zinc-200"
+            />
+            <div className="flex gap-2">
+                <button
+                    type="submit"
+                    disabled={!formData.name || !formData.date}
+                    className="flex-1 bg-[#6866D6] text-white rounded p-1.5 text-xs hover:bg-[#5856c4] disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center gap-1"
+                >
+                    <Timer size={14} />
+                    {isEnglish ? 'Save' : 'Guardar'}
+                </button>
+                {isEditing && onCancel && (
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        className="p-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-red-500 transition-colors"
+                    >
+                        <X size={14} />
+                    </button>
+                )}
+            </div>
+        </form>
     )
 }

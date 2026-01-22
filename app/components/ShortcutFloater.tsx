@@ -44,8 +44,8 @@ export default function ShortcutFloater() {
         { name: 'Trophy', url: 'https://static.vecteezy.com/system/resources/previews/059/907/959/non_2x/trophy-black-illustration-vector.jpg' },
         { name: 'Linux', url: 'https://icon-library.com/images/linux-tux-icon/linux-tux-icon-1.jpg' },
         { name: 'Job', url: 'https://static.vecteezy.com/system/resources/previews/021/839/489/non_2x/recruitment-black-glyph-icon-hiring-process-choosing-candidate-job-position-headhunting-application-silhouette-symbol-on-white-space-solid-pictogram-isolated-illustration-vector.jpg' },
-        { name: 'Link', url: 'https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Fwebstockreview.net%2Fimages%2Flink-icon-png-6.png&sp=1768587931T58fc6a54a4865b8be8a60d5e20fc32b39ad18fdddbbfb451e58c6a57cb39fdd1' },
-        { name: 'Hobby', url: 'https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Fwww.pngplay.com%2Fwp-content%2Fuploads%2F12%2FJoystick-Transparent-File.png&sp=1768588281T8be5368b8511109b3b4a866eb6928bd55eb06f6e60ffd26a4da9cc2e704ed504' },
+        { name: 'Link', url: 'https://marketplace.canva.com/wi4WI/MAFuGhwi4WI/1/tl/canva-url-link-icon-MAFuGhwi4WI.png' },
+        { name: 'Hobby', url: 'https://png.pngtree.com/png-vector/20190721/ourmid/pngtree-joystick-icon-for-your-project-png-image_1559232.jpg' },
     ]
 
     const t = {
