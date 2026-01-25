@@ -13,6 +13,11 @@
 - **Auto-Preservation**: Deleting the last note automatically generates a fresh one, so you're never left with an empty void.
 - **Rich Formatting**: Markdown support (`*bold*`, `_italics_`) and auto-linked URLs.
 - **Emoji Picker**: Type `:` to search/insert emojis instantly.
+- **Image Attachments**: Drag & drop or paste images directly into notes. Features include:
+    - **Smart Limits**: Up to 4 images on desktop and 2 on mobile.
+    - **Interactive Reordering**: Swap image positions by dragging them (only in edit mode on desktop).
+    - **Fullscreen Preview**: Click on images to view them in a high-quality lightbox.
+    - **Safe Management**: Add or remove images securely while in edit mode.
 
 ### ✅ Daily Tasks
 - **Focus Mode**: When adding a task, existing items fade out to help you concentrate on the new entry.

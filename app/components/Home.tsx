@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Copy, Pencil, Trash2, Save, Check, ChevronUp, ChevronDown, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Copy, Pencil, Trash2, Save, Check, ChevronUp, ChevronDown, X, Plus } from "lucide-react";
 import { symbols, SymbolItem } from "../data/symbols";
 import { dictionary, Language } from "../data/i18n";
 import FloatingLinks from "./FloatingLinks";
@@ -14,6 +14,7 @@ interface TextBlock {
     title: string;
     content: string;
     color?: string;
+    images?: string[];
 }
 
 interface HomeProps {
@@ -40,6 +41,17 @@ export default function Home({ lang }: HomeProps) {
     const [emojiCoords, setEmojiCoords] = useState({ top: 0, left: 0 });
     const [triggerIdx, setTriggerIdx] = useState<number>(-1);
     const [focusType, setFocusType] = useState<'title' | 'content' | null>(null);
+    const [imageModalUrl, setImageModalUrl] = useState<string | null>(null);
+    const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+    const [isMobile, setIsMobile] = useState(false);
+    const [draggedImageInfo, setDraggedImageInfo] = useState<{ blockId: string, index: number } | null>(null);
+
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 768);
+        check();
+        window.addEventListener('resize', check);
+        return () => window.removeEventListener('resize', check);
+    }, []);
 
     // Cargar datos del localStorage al montar el componente
     useEffect(() => {
@@ -299,6 +311,69 @@ export default function Home({ lang }: HomeProps) {
             setEmojiCoords({ top: top + height + 5, left: left + 15 });
         } else {
             setShowEmojiPicker(false);
+        }
+    };
+
+    const handleImageUpload = (blockId: string, files: FileList | null) => {
+        if (!files) return;
+
+        const isMobile = window.innerWidth < 768;
+        const maxImages = isMobile ? 2 : 4;
+
+        const block = blocks.find(b => b.id === blockId);
+        if (!block) return;
+
+        const currentImages = block.images || [];
+        if (currentImages.length >= maxImages) return;
+
+        const remainingSlots = maxImages - currentImages.length;
+        const filesToProcess = Array.from(files).filter(f => f.type.startsWith('image/')).slice(0, remainingSlots);
+
+        filesToProcess.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64 = e.target?.result as string;
+                setBlocks(prev => prev.map(b =>
+                    b.id === blockId
+                        ? { ...b, images: [...(b.images || []), base64] }
+                        : b
+                ));
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const removeImage = (blockId: string, index: number) => {
+        setBlocks(prev => prev.map(b =>
+            b.id === blockId
+                ? { ...b, images: b.images?.filter((_, i) => i !== index) }
+                : b
+        ));
+    };
+
+    const swapImages = (blockId: string, idx1: number, idx2: number) => {
+        setBlocks(prev => prev.map(b => {
+            if (b.id !== blockId || !b.images) return b;
+            const newImages = [...b.images];
+            const temp = newImages[idx1];
+            newImages[idx1] = newImages[idx2];
+            newImages[idx2] = temp;
+            return { ...b, images: newImages };
+        }));
+    };
+
+    const handlePaste = (e: React.ClipboardEvent, blockId: string) => {
+        const items = e.clipboardData.items;
+        const files: File[] = [];
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const file = items[i].getAsFile();
+                if (file) files.push(file);
+            }
+        }
+        if (files.length > 0) {
+            // Create a fake FileList-like object or just pass the array
+            handleImageUpload(blockId, files as any);
         }
     };
 
@@ -564,7 +639,20 @@ export default function Home({ lang }: HomeProps) {
                     <div
                         key={block.id}
                         data-block-id={block.id}
-                        className="border border-black/5 rounded-lg p-4 pb-2 transition-colors duration-200"
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.add('ring-2', 'ring-[#6866D6]', 'ring-offset-2');
+                        }}
+                        onDragLeave={(e) => {
+                            e.currentTarget.classList.remove('ring-2', 'ring-[#6866D6]', 'ring-offset-2');
+                        }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('ring-2', 'ring-[#6866D6]', 'ring-offset-2');
+                            handleImageUpload(block.id, e.dataTransfer.files);
+                        }}
+                        onPaste={(e) => handlePaste(e, block.id)}
+                        className="border border-black/5 rounded-lg p-4 pb-2 transition-all duration-200"
                         style={{ backgroundColor: (block.userTag && tagColors[block.userTag]) || block.color || "#FEFCE8" }}
                     >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-3">
@@ -670,6 +758,7 @@ export default function Home({ lang }: HomeProps) {
                                     value={editingContent}
                                     onChange={(e) => handleTextChange(e, block.id)}
                                     onKeyDown={(e) => handleKeyDown(e, block.id)}
+                                    onPaste={(e) => handlePaste(e, block.id)}
                                     placeholder={t.placeholder}
                                     className="w-full min-h-[160px] p-3 border border-black/10 rounded-md resize-y bg-black/10 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 whitespace-pre-wrap break-words overflow-auto"
                                 />
@@ -722,6 +811,66 @@ export default function Home({ lang }: HomeProps) {
                                 dangerouslySetInnerHTML={{ __html: formatText(block.content) }}
                             />
                         )}
+
+                        {/* Images Section */}
+                        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {(block.images || []).slice(0, 4).map((img, idx) => (
+                                <div
+                                    key={idx}
+                                    draggable={editingBlockId === block.id && !isMobile}
+                                    onDragStart={() => setDraggedImageInfo({ blockId: block.id, index: idx })}
+                                    onDragEnter={() => {
+                                        if (draggedImageInfo && draggedImageInfo.blockId === block.id && draggedImageInfo.index !== idx) {
+                                            swapImages(block.id, draggedImageInfo.index, idx);
+                                            setDraggedImageInfo({ ...draggedImageInfo, index: idx });
+                                        }
+                                    }}
+                                    onDragOver={(e) => {
+                                        if (draggedImageInfo && draggedImageInfo.blockId === block.id) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        setDraggedImageInfo(null);
+                                    }}
+                                    onDragEnd={() => setDraggedImageInfo(null)}
+                                    className={`relative group/img aspect-square rounded-md overflow-hidden border border-black/10 bg-black/5 cursor-pointer transition-all ${idx >= 2 ? 'hidden md:block' : ''} ${editingBlockId === block.id && !isMobile ? 'cursor-move' : 'cursor-zoom-in'}`}
+                                    onClick={() => editingBlockId !== block.id && setImageModalUrl(img)}
+                                >
+                                    <img src={img} alt="" className="w-full h-full object-cover transition-transform group-hover/img:scale-105 pointer-events-none" />
+                                    {editingBlockId === block.id && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeImage(block.id, idx);
+                                            }}
+                                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity cursor-pointer shadow-sm hover:bg-red-600 z-10"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                            {editingBlockId === block.id && (block.images || []).length < (isMobile ? 2 : 4) && (
+                                <div
+                                    className="relative aspect-square rounded-md border-2 border-dashed border-black/10 bg-black/5 hover:bg-black/10 hover:border-black/20 transition-all cursor-pointer flex flex-col items-center justify-center gap-1 group/add"
+                                    onClick={() => fileInputRefs.current[block.id]?.click()}
+                                >
+                                    <Plus className="w-6 h-6 text-black/30 group-hover/add:text-black/50 transition-colors" />
+                                    <span className="text-[10px] text-black/30 font-bold uppercase group-hover/add:text-black/50">{lang === 'es' ? 'Agregar' : 'Add'}</span>
+                                    <input
+                                        type="file"
+                                        ref={el => { fileInputRefs.current[block.id] = el }}
+                                        className="hidden"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={(e) => handleImageUpload(block.id, e.target.files)}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
                         <div className="flex items-center mt-2 h-10 relative">
                             {/* Left side: Tag or Editor */}
                             <div className="flex-1 flex items-center justify-start">
@@ -800,6 +949,27 @@ export default function Home({ lang }: HomeProps) {
 
             {/* Floating Links Component */}
             <FloatingLinks lang={lang} />
+
+            {/* Image Modal */}
+            {imageModalUrl && (
+                <div
+                    className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-200"
+                    onClick={() => setImageModalUrl(null)}
+                >
+                    <button
+                        className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors cursor-pointer"
+                        onClick={() => setImageModalUrl(null)}
+                    >
+                        <X size={32} />
+                    </button>
+                    <img
+                        src={imageModalUrl}
+                        alt="Preview"
+                        className="max-w-full max-h-full object-contain rounded shadow-2xl animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
         </section >
     );
 }
