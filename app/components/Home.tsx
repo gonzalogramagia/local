@@ -33,6 +33,17 @@ export default function Home({ lang }: HomeProps) {
     const [createdBlockId, setCreatedBlockId] = useState<string | null>(null);
     const [tagColors, setTagColors] = useState<Record<string, string>>({});
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
+    const [deletingFileBlockId, setDeletingFileBlockId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (deletingFileBlockId || deletingBlockId) {
+            const timer = setTimeout(() => {
+                setDeletingFileBlockId(null);
+                setDeletingBlockId(null);
+            }, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [deletingFileBlockId, deletingBlockId]);
 
     // Emoji Picker State
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -198,6 +209,7 @@ export default function Home({ lang }: HomeProps) {
             setEditingBlockId(null);
             setEditingContent("");
             setShowEmojiPicker(false);
+            setDeletingFileBlockId(null);
         };
 
         document.addEventListener("click", onDocClick);
@@ -224,11 +236,13 @@ export default function Home({ lang }: HomeProps) {
             updateBlock(block.id, editingContent);
             setEditingBlockId(null);
             setEditingContent("");
+            setDeletingFileBlockId(null);
         } else {
             saveCurrentEditing();
             setEditingBlockId(block.id);
             setEditingContent(block.content);
             setFocusType('content');
+            setDeletingFileBlockId(null);
         }
     };
 
@@ -438,6 +452,7 @@ export default function Home({ lang }: HomeProps) {
             updateBlock(blockId, editingContent);
             setEditingBlockId(null);
             setEditingContent("");
+            setDeletingFileBlockId(null);
             (e.target as HTMLTextAreaElement).blur();
         }
     };
@@ -545,9 +560,6 @@ export default function Home({ lang }: HomeProps) {
             setDeletingBlockId(null);
         } else {
             setDeletingBlockId(id);
-            setTimeout(() => {
-                setDeletingBlockId((current) => (current === id ? null : current));
-            }, 3000);
         }
     };
 
@@ -933,10 +945,16 @@ export default function Home({ lang }: HomeProps) {
                                         </div>
                                     </div>
                                 )}
-                                {editingBlockId !== block.id && block.userTag && (
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/10 text-zinc-700 uppercase tracking-wider border border-black/10 whitespace-nowrap">
-                                        #{block.userTag}
-                                    </span>
+                                {editingBlockId !== block.id && (
+                                    block.userTag ? (
+                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/10 text-zinc-700 uppercase tracking-wider border border-black/10 whitespace-nowrap">
+                                            #{block.userTag}
+                                        </span>
+                                    ) : (
+                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-400/10 text-zinc-400 uppercase tracking-widest border border-black/5 whitespace-nowrap italic">
+                                            {t.noTag}
+                                        </span>
+                                    )
                                 )}
                             </div>
 
@@ -945,39 +963,62 @@ export default function Home({ lang }: HomeProps) {
                             <div className="flex-1 flex items-center justify-end gap-2">
                                 {/* Attachment Display (Footer - Only for non-images) */}
                                 <div className="flex flex-wrap items-center justify-end gap-2">
-                                    {(block.attachments || []).filter(a => !a.type.startsWith('image/') && !a.name.toLowerCase().endsWith('.jpg') && !a.name.toLowerCase().endsWith('.jpeg')).map((file, idx) => (
-                                        <div key={idx} className="flex items-center gap-1 group/file">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const link = document.createElement('a');
-                                                    link.href = file.url;
-                                                    link.download = file.name;
-                                                    link.click();
-                                                }}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-md transition-all scale-90 sm:scale-100 origin-right cursor-pointer shadow-sm border border-black/5 max-w-[150px] sm:max-w-[200px]"
-                                            >
-                                                <Paperclip size={14} className="text-zinc-400 flex-shrink-0" />
-                                                <span className="text-[10px] font-bold uppercase truncate">
-                                                    {file.name}
-                                                </span>
-                                            </button>
-                                            {editingBlockId === block.id && (
+                                    {(block.attachments || []).filter(a => !a.type.startsWith('image/') && !a.name.toLowerCase().endsWith('.jpg') && !a.name.toLowerCase().endsWith('.jpeg')).map((file, idx) => {
+                                        const isDeletingFile = deletingFileBlockId === block.id;
+                                        return (
+                                            <div key={idx} className="flex items-center gap-1 group/file">
                                                 <button
-                                                    onClick={() => {
-                                                        const realIdx = block.attachments?.findIndex(a => a === file);
-                                                        if (realIdx !== undefined && realIdx !== -1) {
-                                                            removeAttachment(block.id, realIdx, false);
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        if (editingBlockId === block.id) {
+                                                            if (isDeletingFile) {
+                                                                setDeletingFileBlockId(null);
+                                                            } else {
+                                                                setDeletingFileBlockId(block.id);
+                                                            }
+                                                            return;
+                                                        }
+                                                        const link = document.createElement('a');
+                                                        link.href = file.url;
+                                                        link.download = file.name;
+                                                        link.click();
+                                                    }}
+                                                    onDoubleClick={(e) => {
+                                                        if (editingBlockId === block.id) {
+                                                            e.preventDefault();
+                                                            const realIdx = block.attachments?.findIndex(a => a === file);
+                                                            if (realIdx !== undefined && realIdx !== -1) {
+                                                                removeAttachment(block.id, realIdx, false);
+                                                            }
+                                                            setDeletingFileBlockId(null);
                                                         }
                                                     }}
-                                                    className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer"
-                                                    title={lang === 'es' ? 'Borrar archivo' : 'Delete file'}
+                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all scale-90 sm:scale-100 origin-right cursor-pointer shadow-sm border max-w-[150px] sm:max-w-[200px] group/btn ${isDeletingFile && editingBlockId === block.id
+                                                        ? "bg-red-500 text-white border-red-600 hover:bg-red-600"
+                                                        : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border-black/5"
+                                                        }`}
                                                 >
-                                                    <X size={14} />
+                                                    {editingBlockId === block.id ? (
+                                                        <>
+                                                            {isDeletingFile ? (
+                                                                <X size={14} className="text-white flex-shrink-0" />
+                                                            ) : (
+                                                                <>
+                                                                    <Paperclip size={14} className="text-zinc-400 flex-shrink-0 group-hover/btn:hidden" />
+                                                                    <X size={14} className="text-zinc-400 flex-shrink-0 hidden group-hover/btn:block" />
+                                                                </>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <Paperclip size={14} className="text-zinc-400 flex-shrink-0" />
+                                                    )}
+                                                    <span className="text-[10px] font-bold uppercase truncate">
+                                                        {file.name}
+                                                    </span>
                                                 </button>
-                                            )}
-                                        </div>
-                                    ))}
+                                            </div>
+                                        );
+                                    })}
 
                                     {/* Action Button: Attach (Only if NO non-image files exist) */}
                                     {editingBlockId === block.id && (block.attachments || []).filter(a => !a.type.startsWith('image/') && !a.name.toLowerCase().endsWith('.jpg') && !a.name.toLowerCase().endsWith('.jpeg')).length === 0 && (
