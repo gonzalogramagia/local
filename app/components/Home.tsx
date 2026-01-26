@@ -33,17 +33,20 @@ export default function Home({ lang }: HomeProps) {
     const [createdBlockId, setCreatedBlockId] = useState<string | null>(null);
     const [tagColors, setTagColors] = useState<Record<string, string>>({});
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
-    const [deletingFileBlockId, setDeletingFileBlockId] = useState<string | null>(null);
+    const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
+    const [editingTitle, setEditingTitle] = useState("");
+    const [editingTag, setEditingTag] = useState("");
+
 
     useEffect(() => {
-        if (deletingFileBlockId || deletingBlockId) {
+        if (deletingBlockId || deletingFileId) {
             const timer = setTimeout(() => {
-                setDeletingFileBlockId(null);
                 setDeletingBlockId(null);
+                setDeletingFileId(null);
             }, 1500);
             return () => clearTimeout(timer);
         }
-    }, [deletingFileBlockId, deletingBlockId]);
+    }, [deletingBlockId, deletingFileId]);
 
     // Emoji Picker State
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -52,7 +55,7 @@ export default function Home({ lang }: HomeProps) {
     const [emojiSelectedIndex, setEmojiSelectedIndex] = useState(0);
     const [emojiCoords, setEmojiCoords] = useState({ top: 0, left: 0 });
     const [triggerIdx, setTriggerIdx] = useState<number>(-1);
-    const [focusType, setFocusType] = useState<'title' | 'content' | null>(null);
+    const [focusType, setFocusType] = useState<'title' | 'content' | 'tag' | null>(null);
     const [imageModalUrl, setImageModalUrl] = useState<string | null>(null);
     const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
     const [isMobile, setIsMobile] = useState(false);
@@ -127,15 +130,71 @@ export default function Home({ lang }: HomeProps) {
         return () => window.removeEventListener("storage", handleStorageChange);
     }, []);
 
-    // Scroll to editing block
+    // Scroll and center the editing block
     useEffect(() => {
         if (editingBlockId) {
-            const element = document.querySelector(`[data-block-id="${editingBlockId}"]`);
-            if (element) {
-                element.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
+            const centerBlock = () => {
+                const element = document.querySelector(`[data-block-id="${editingBlockId}"]`);
+                if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            };
+
+            // Center immediately and again after a short delay to allow DOM updates
+            centerBlock();
+            const timeout = setTimeout(centerBlock, 50);
+
+            // Disable scroll when editing
+            document.body.style.overflow = "hidden";
+            return () => {
+                clearTimeout(timeout);
+            };
+        } else {
+            document.body.style.overflow = "auto";
         }
-    }, [editingBlockId]);
+
+        return () => {
+            document.body.style.overflow = "auto";
+        };
+    }, [editingBlockId, blocks]); // Triggers when editing starts OR note moves
+
+    // Aggressive focus management during editing
+    useEffect(() => {
+        if (editingBlockId && focusType) {
+            const focusIntense = () => {
+                const blockElement = document.querySelector(`[data-block-id="${editingBlockId}"]`);
+                if (blockElement) {
+                    const target = focusType === 'title'
+                        ? blockElement.querySelector('input[data-input-type="title"]')
+                        : focusType === 'tag'
+                            ? blockElement.querySelector('input[data-input-type="tag"]')
+                            : blockElement.querySelector('textarea');
+
+                    if (target && document.activeElement !== target) {
+                        // Preserve cursor position
+                        const start = (target as any).selectionStart;
+                        const end = (target as any).selectionEnd;
+
+                        (target as HTMLElement).focus();
+
+                        if (start !== undefined && end !== undefined && (target as any).setSelectionRange) {
+                            (target as any).setSelectionRange(start, end);
+                        }
+                    }
+                }
+            };
+
+            // Run immediately and also in the next frame to be "aggressive"
+            focusIntense();
+            const raf = requestAnimationFrame(focusIntense);
+            const timeout = setTimeout(focusIntense, 50); // Fallback for slower re-renders
+
+            return () => {
+                cancelAnimationFrame(raf);
+                clearTimeout(timeout);
+            };
+        }
+    }, [editingBlockId, focusType, blocks, editingContent, editingTitle, editingTag]);
 
     // Guardar en localStorage cada vez que cambien los bloques
     useEffect(() => {
@@ -164,7 +223,7 @@ export default function Home({ lang }: HomeProps) {
         const onDocClick = (e: MouseEvent) => {
             if (!editingBlockId) return;
             const target = e.target as HTMLElement | null;
-            if (!target) return;
+            if (!target || !document.body.contains(target)) return;
 
             // Removed early return for links to ensure saving applies even when navigating.
             // if (target.closest && target.closest("a")) return;
@@ -191,9 +250,10 @@ export default function Home({ lang }: HomeProps) {
             const current = blocks.find((b) => b.id === editingBlockId);
             if (current) {
                 // Ensure synchronous persistence before potential navigation
-                const newBlocks = blocks.map(b => b.id === current.id ? { ...b, content: editingContent } : b);
+                const normalizedTag = editingTag.trim().replace(/\s+/g, '-').toUpperCase();
+                const newBlocks = blocks.map(b => b.id === current.id ? { ...b, content: editingContent, title: editingTitle, userTag: normalizedTag } : b);
                 localStorage.setItem("localhost-blocks", JSON.stringify(newBlocks));
-                updateBlock(current.id, editingContent);
+                updateBlock(current.id, editingContent, editingTitle, editingTag);
             }
 
             if (targetBlockId) {
@@ -201,6 +261,8 @@ export default function Home({ lang }: HomeProps) {
                 if (next) {
                     setEditingBlockId(next.id);
                     setEditingContent(next.content);
+                    setEditingTitle(next.title);
+                    setEditingTag(next.userTag || "");
                     // Single click focus handled by autoFocus on textarea or manual focus after state update
                     return;
                 }
@@ -208,13 +270,15 @@ export default function Home({ lang }: HomeProps) {
 
             setEditingBlockId(null);
             setEditingContent("");
+            setEditingTitle("");
+            setEditingTag("");
             setShowEmojiPicker(false);
-            setDeletingFileBlockId(null);
+
         };
 
         document.addEventListener("click", onDocClick);
         return () => document.removeEventListener("click", onDocClick);
-    }, [editingBlockId, editingContent, blocks]);
+    }, [editingBlockId, editingContent, blocks, editingTitle, editingTag]);
 
     const generateId = () => {
         const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -233,23 +297,27 @@ export default function Home({ lang }: HomeProps) {
 
     const toggleEditBlock = (block: TextBlock) => {
         if (editingBlockId === block.id) {
-            updateBlock(block.id, editingContent);
+            updateBlock(block.id, editingContent, editingTitle, editingTag);
             setEditingBlockId(null);
             setEditingContent("");
-            setDeletingFileBlockId(null);
+            setEditingTitle("");
+            setEditingTag("");
+
         } else {
             saveCurrentEditing();
             setEditingBlockId(block.id);
             setEditingContent(block.content);
+            setEditingTitle(block.title);
+            setEditingTag(block.userTag || "");
             setFocusType('content');
-            setDeletingFileBlockId(null);
+
         }
     };
 
     const saveCurrentEditing = () => {
         if (!editingBlockId) return;
         const current = blocks.find((b) => b.id === editingBlockId);
-        if (current) updateBlock(current.id, editingContent);
+        if (current) updateBlock(current.id, editingContent, editingTitle, editingTag);
     };
 
     // Scroll to moved block
@@ -449,10 +517,12 @@ export default function Home({ lang }: HomeProps) {
 
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            updateBlock(blockId, editingContent);
+            updateBlock(blockId, editingContent, editingTitle, editingTag);
             setEditingBlockId(null);
             setEditingContent("");
-            setDeletingFileBlockId(null);
+            setEditingTitle("");
+            setEditingTag("");
+
             (e.target as HTMLTextAreaElement).blur();
         }
     };
@@ -491,34 +561,28 @@ export default function Home({ lang }: HomeProps) {
         setCreatedBlockId(id);
     };
 
-    const updateBlock = (id: string, content: string) => {
+    const updateBlock = (id: string, content: string, title?: string, userTag?: string) => {
+        let finalTagName = "";
+
         setBlocks((prev) =>
-            prev.map((block) => (block.id === id ? { ...block, content } : block))
+            prev.map((block) => {
+                const normalizedTag = userTag !== undefined
+                    ? userTag.trim().replace(/\s+/g, '-').toUpperCase()
+                    : (block.userTag || "");
+
+                if (block.id === id) {
+                    finalTagName = normalizedTag;
+                    return { ...block, content, title: title ?? block.title, userTag: normalizedTag || undefined };
+                }
+                return block;
+            })
         );
-    };
 
-    const updateBlockTitle = (id: string, title: string) => {
-        setBlocks((prev) =>
-            prev.map((block) => (block.id === id ? { ...block, title } : block))
-        );
-    };
-
-    const updateBlockTag = (id: string, userTag: string) => {
-        const normalizedTag = userTag.toUpperCase();
-
-        // Inherit block color for new tags
-        if (normalizedTag && !tagColors[normalizedTag]) {
+        if (finalTagName && !tagColors[finalTagName]) {
             const block = blocks.find(b => b.id === id);
             if (block && block.color) {
-                updateTagColor(normalizedTag, block.color);
+                updateTagColor(finalTagName, block.color);
             }
-        }
-
-        setBlocks((prev) =>
-            prev.map((block) => (block.id === id ? { ...block, userTag: normalizedTag } : block))
-        );
-        if (selectedTag && selectedTag !== normalizedTag) {
-            setSelectedTag(null);
         }
     };
 
@@ -542,7 +606,11 @@ export default function Home({ lang }: HomeProps) {
         });
     };
 
-    const deleteBlock = (id: string) => {
+    const deleteBlock = (id: string, e?: React.MouseEvent) => {
+        if (e) {
+            e.stopPropagation();
+            if (e.nativeEvent.stopImmediatePropagation) e.nativeEvent.stopImmediatePropagation();
+        }
         if (deletingBlockId === id) {
             setBlocks((prev) => {
                 const remaining = prev.filter((block) => block.id !== id);
@@ -665,429 +733,503 @@ export default function Home({ lang }: HomeProps) {
 
             <div className="space-y-6">
                 {filteredBlocks.map((block) => (
-                    <div
-                        key={block.id}
-                        data-block-id={block.id}
-                        onDragOver={(e) => {
-                            e.preventDefault();
-                            e.currentTarget.classList.add('ring-2', 'ring-[#6866D6]', 'ring-offset-2');
-                        }}
-                        onDragLeave={(e) => {
-                            e.currentTarget.classList.remove('ring-2', 'ring-[#6866D6]', 'ring-offset-2');
-                        }}
-                        onDrop={(e) => {
-                            e.preventDefault();
-                            e.currentTarget.classList.remove('ring-2', 'ring-[#6866D6]', 'ring-offset-2');
-                            handleFileUpload(block.id, e.dataTransfer.files);
-                        }}
-                        onPaste={(e) => handlePaste(e, block.id)}
-                        className="border border-black/5 rounded-lg p-4 pb-2 transition-all duration-200"
-                        style={{ backgroundColor: (block.userTag && tagColors[block.userTag]) || block.color || "#FEFCE8" }}
-                    >
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-3">
-                            <input
-                                type="text"
-                                value={block.title}
-                                onChange={(e) => updateBlockTitle(block.id, e.target.value)}
-                                onFocus={() => {
-                                    if (editingBlockId !== block.id) {
-                                        saveCurrentEditing();
-                                        setEditingBlockId(block.id);
-                                        setEditingContent(block.content);
-                                        setFocusType('title');
-                                    }
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                        e.preventDefault();
-                                        if (editingBlockId === block.id) {
-                                            updateBlock(block.id, editingContent);
-                                            setEditingBlockId(null);
-                                            setEditingContent("");
-                                            (e.target as HTMLInputElement).blur();
+                    <div key={block.id} className="relative group/note">
+                        <div
+                            data-block-id={block.id}
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.add('ring-2', 'ring-[#6866D6]', 'ring-offset-2');
+                            }}
+                            onDragLeave={(e) => {
+                                e.currentTarget.classList.remove('ring-2', 'ring-[#6866D6]', 'ring-offset-2');
+                            }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.remove('ring-2', 'ring-[#6866D6]', 'ring-offset-2');
+                                handleFileUpload(block.id, e.dataTransfer.files);
+                            }}
+                            onPaste={(e) => handlePaste(e, block.id)}
+                            onClick={(e) => {
+                                if (editingBlockId === block.id) {
+                                    e.stopPropagation();
+                                }
+                            }}
+                            className="border border-black/5 rounded-lg p-4 pb-2 transition-all duration-200"
+                            style={{ backgroundColor: (block.userTag && tagColors[block.userTag]) || block.color || "#FEFCE8" }}
+                        >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-3">
+                                <input
+                                    type="text"
+                                    value={editingBlockId === block.id ? editingTitle : block.title}
+                                    onChange={(e) => setEditingTitle(e.target.value)}
+                                    onFocus={() => {
+                                        if (editingBlockId !== block.id) {
+                                            saveCurrentEditing();
+                                            setEditingBlockId(block.id);
+                                            setEditingContent(block.content);
+                                            setEditingTitle(block.title);
+                                            setEditingTag(block.userTag || "");
                                         }
-                                    }
-                                }}
-                                className={`w-full sm:flex-1 text-lg font-semibold px-2 py-1 border-b focus:outline-none focus:border-blue-500/50 rounded-t-md transition-all ${editingBlockId === block.id
-                                    ? "bg-black/10 border-black/10 text-zinc-900 shadow-sm"
-                                    : "bg-transparent border-transparent text-zinc-900"
-                                    }`}
-                                style={{ borderBottomColor: 'rgba(0,0,0,0.1)' }}
-                                placeholder={`Nota #${block.tag}`}
-                            />
-                            <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start gap-3 mt-1 sm:mt-0">
-                                {editingBlockId !== block.id && (
+                                        setFocusType('title');
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            if (editingBlockId === block.id) {
+                                                updateBlock(block.id, editingContent, editingTitle, editingTag);
+                                                setEditingBlockId(null);
+                                                setEditingContent("");
+                                                setEditingTitle("");
+                                                setEditingTag("");
+                                                (e.target as HTMLInputElement).blur();
+                                            }
+                                        }
+                                    }}
+                                    data-input-type="title"
+                                    className={`w-full sm:flex-1 text-lg font-semibold px-2 py-1 border-b focus:outline-none focus:border-blue-500/50 rounded-t-md transition-all ${editingBlockId === block.id
+                                        ? "bg-black/10 border-black/10 text-zinc-900 shadow-sm"
+                                        : "bg-transparent border-transparent text-zinc-900"
+                                        }`}
+                                    style={{ borderBottomColor: 'rgba(0,0,0,0.1)' }}
+                                    placeholder={`Nota #${block.tag}`}
+                                />
+                                <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start gap-3 mt-1 sm:mt-0">
+                                    {editingBlockId !== block.id && (
+                                        <button
+                                            onClick={() => copyToClipboard(block.id, block.content)}
+                                            className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${copiedBlockId === block.id
+                                                ? "bg-green-100 text-green-600"
+                                                : "text-gray-500 hover:bg-gray-100"
+                                                }`}
+                                            title={t.copy}
+                                        >
+                                            {copiedBlockId === block.id ? (
+                                                <>
+                                                    <Check className="w-4 h-4" />
+                                                    <span>{t.copied}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Copy className="w-4 h-4" />
+                                                    <span>{t.copy}</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+
+
+
                                     <button
-                                        onClick={() => copyToClipboard(block.id, block.content)}
-                                        className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${copiedBlockId === block.id
-                                            ? "bg-green-100 text-green-600"
-                                            : "text-gray-500 hover:bg-gray-100"
-                                            }`}
-                                        title={t.copy}
+                                        onClick={() => toggleEditBlock(block)}
+                                        className="flex items-center gap-1 text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer"
                                     >
-                                        {copiedBlockId === block.id ? (
+                                        {editingBlockId === block.id ? (
                                             <>
-                                                <Check className="w-4 h-4" />
-                                                <span>{t.copied}</span>
+                                                <Save className="w-4 h-4" />
+                                                <span>{t.save}</span>
                                             </>
                                         ) : (
                                             <>
-                                                <Copy className="w-4 h-4" />
-                                                <span>{t.copy}</span>
+                                                <Pencil className="w-4 h-4" />
+                                                <span>{t.edit}</span>
                                             </>
                                         )}
                                     </button>
-                                )}
 
-
-
-                                <button
-                                    onClick={() => toggleEditBlock(block)}
-                                    className="flex items-center gap-1 text-xs text-gray-500 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer"
-                                >
-                                    {editingBlockId === block.id ? (
-                                        <>
-                                            <Save className="w-4 h-4" />
-                                            <span>{t.save}</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Pencil className="w-4 h-4" />
-                                            <span>{t.edit}</span>
-                                        </>
-                                    )}
-                                </button>
-
-                                {editingBlockId === block.id && (
-                                    <button
-                                        onClick={() => deleteBlock(block.id)}
-                                        className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${deletingBlockId === block.id
-                                            ? "bg-red-100 text-red-600 font-bold"
-                                            : "text-red-500 hover:text-red-700 hover:bg-gray-100"
-                                            }`}
-                                        aria-label={deletingBlockId === block.id ? t.ariaDelete : `${t.ariaDeleteSpecific} ${block.title}`}
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                        <span>{deletingBlockId === block.id ? t.confirmDelete : t.delete}</span>
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {editingBlockId === block.id ? (
-                            <div className="relative">
-                                <textarea
-                                    autoFocus={focusType === 'content'}
-                                    onFocus={(e) => {
-                                        setFocusType('content');
-                                        const val = e.target.value;
-                                        e.target.value = "";
-                                        e.target.value = val;
-                                    }}
-                                    value={editingContent}
-                                    onChange={(e) => handleTextChange(e, block.id)}
-                                    onKeyDown={(e) => handleKeyDown(e, block.id)}
-                                    onPaste={(e) => handlePaste(e, block.id)}
-                                    placeholder={t.placeholder}
-                                    className="w-full min-h-[160px] p-3 border border-black/10 rounded-md resize-y bg-black/10 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 whitespace-pre-wrap break-words overflow-auto"
-                                />
-                                {showEmojiPicker && filteredEmojis.length > 0 && (
-                                    <div
-                                        id="emoji-picker-container"
-                                        className="absolute z-50 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden min-w-[200px]"
-                                        style={{
-                                            top: emojiCoords.top,
-                                            left: emojiCoords.left
-                                        }}
-                                    >
-                                        <ul className="max-h-[200px] overflow-y-auto">
-                                            {filteredEmojis.map((item, idx) => (
-                                                <li
-                                                    key={item.symbol + idx}
-                                                    className={`px-3 py-2 flex items-center gap-2 cursor-pointer text-sm ${idx === emojiSelectedIndex
-                                                        ? "bg-blue-100 text-blue-800"
-                                                        : "text-gray-700 hover:bg-gray-100"
-                                                        }`}
-                                                    onClick={() => insertEmoji(item)}
-                                                    onMouseEnter={() => setEmojiSelectedIndex(idx)}
-                                                >
-                                                    <span className="text-xl">{item.symbol}</span>
-                                                    <div className="flex flex-col">
-                                                        <span className="font-medium">{item.description[lang].main}</span>
-                                                        <span className="text-xs opacity-60">:{item.description.en.main.toLowerCase().replace(/\s+/g, '_')}:</span>
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div
-                                className="w-full min-h-[160px] p-3 border border-black/5 rounded-md resize-y text-zinc-900 whitespace-pre-wrap break-words overflow-auto transition-colors duration-200"
-                                style={{ backgroundColor: 'transparent' }}
-                                onDoubleClick={(e) => {
-                                    let node = e.target as HTMLElement | null;
-                                    while (node) {
-                                        if (node.tagName === "A") return;
-                                        node = node.parentElement;
-                                    }
-                                    saveCurrentEditing();
-                                    setEditingBlockId(block.id);
-                                    setEditingContent(block.content);
-                                    setFocusType('content');
-                                }}
-                                dangerouslySetInnerHTML={{ __html: formatText(block.content) }}
-                            />
-                        )}
-                        {/* Image Attachment Preview Grid */}
-                        {(() => {
-                            const attachments = block.attachments || [];
-                            const legacyImages = block.images || [];
-
-                            // Combine both, filtering for images
-                            const imageAttachments = [
-                                ...legacyImages.map((url, i) => ({ url, name: 'image', type: 'legacy', index: i })),
-                                ...attachments
-                                    .filter(a => a.type.startsWith('image/') || a.name.toLowerCase().endsWith('.jpg') || a.name.toLowerCase().endsWith('.jpeg'))
-                                    .map((a, i) => ({ ...a, type: 'attachment', index: i }))
-                            ].slice(0, 4);
-
-                            if (imageAttachments.length === 0) return null;
-
-                            return (
-                                <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2">
-                                    {imageAttachments.map((img, idx) => (
-                                        <div
-                                            key={`${img.type}-${idx}`}
-                                            className="relative group/img aspect-square rounded-md overflow-hidden border border-black/10 bg-black/5 cursor-zoom-in transition-all"
-                                            onClick={() => setImageModalUrl(img.url)}
+                                    {editingBlockId === block.id && (
+                                        <button
+                                            onClick={(e) => deleteBlock(block.id, e)}
+                                            className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${deletingBlockId === block.id
+                                                ? "bg-red-500 text-white font-bold"
+                                                : "text-red-500 hover:text-red-700 hover:bg-gray-100"
+                                                }`}
+                                            aria-label={deletingBlockId === block.id ? t.ariaDelete : `${t.ariaDeleteSpecific} ${block.title}`}
                                         >
-                                            <img src={img.url} alt="" className="w-full h-full object-cover transition-transform group-hover/img:scale-105 pointer-events-none" />
-                                            {editingBlockId === block.id && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        removeAttachment(block.id, img.index, img.type === 'legacy');
-                                                    }}
-                                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity cursor-pointer shadow-sm hover:bg-red-600 z-10"
-                                                >
-                                                    <X size={12} />
-                                                </button>
+                                            {deletingBlockId === block.id ? (
+                                                <Check className="w-4 h-4" />
+                                            ) : (
+                                                <Trash2 className="w-4 h-4" />
                                             )}
-                                        </div>
-                                    ))}
+                                            <span>{deletingBlockId === block.id ? t.confirmDelete : t.delete}</span>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
 
-                                    {/* Add More Images Button */}
-                                    {editingBlockId === block.id && imageAttachments.length > 0 && imageAttachments.length < 4 && (
+                            {editingBlockId === block.id ? (
+                                <div className="relative">
+                                    <textarea
+                                        autoFocus={focusType === 'content'}
+                                        onFocus={(e) => {
+                                            setFocusType('content');
+                                            const val = e.target.value;
+                                            e.target.value = "";
+                                            e.target.value = val;
+                                        }}
+                                        value={editingContent}
+                                        onChange={(e) => handleTextChange(e, block.id)}
+                                        onKeyDown={(e) => handleKeyDown(e, block.id)}
+                                        onPaste={(e) => handlePaste(e, block.id)}
+                                        placeholder={t.placeholder}
+                                        className="w-full min-h-[160px] p-3 border border-black/10 rounded-md resize-y bg-black/10 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 whitespace-pre-wrap break-words overflow-auto"
+                                    />
+                                    {showEmojiPicker && filteredEmojis.length > 0 && (
                                         <div
-                                            className="relative aspect-square rounded-md border-2 border-dashed border-black/10 bg-black/5 hover:bg-black/10 hover:border-black/20 transition-all cursor-pointer flex flex-col items-center justify-center gap-1 group/add-img"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                const input = document.createElement('input');
-                                                input.type = 'file';
-                                                input.accept = 'image/png, image/jpeg, image/jpg';
-                                                input.multiple = true;
-                                                input.onchange = (ev) => {
-                                                    const files = (ev.target as HTMLInputElement).files;
-                                                    handleFileUpload(block.id, files);
-                                                };
-                                                input.click();
+                                            id="emoji-picker-container"
+                                            className="absolute z-50 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden min-w-[200px]"
+                                            style={{
+                                                top: emojiCoords.top,
+                                                left: emojiCoords.left
                                             }}
                                         >
-                                            <Plus className="w-6 h-6 text-black/30 group-hover/add-img:text-black/50 transition-colors" />
-                                            <span className="text-[10px] text-zinc-500 font-bold uppercase group-hover/add-img:text-zinc-600">
-                                                {lang === 'es' ? 'Imagen' : 'Image'}
-                                            </span>
+                                            <ul className="max-h-[200px] overflow-y-auto">
+                                                {filteredEmojis.map((item, idx) => (
+                                                    <li
+                                                        key={item.symbol + idx}
+                                                        className={`px-3 py-2 flex items-center gap-2 cursor-pointer text-sm ${idx === emojiSelectedIndex
+                                                            ? "bg-blue-100 text-blue-800"
+                                                            : "text-gray-700 hover:bg-gray-100"
+                                                            }`}
+                                                        onClick={() => insertEmoji(item)}
+                                                        onMouseEnter={() => setEmojiSelectedIndex(idx)}
+                                                    >
+                                                        <span className="text-xl">{item.symbol}</span>
+                                                        <div className="flex flex-col">
+                                                            <span className="font-medium">{item.description[lang].main}</span>
+                                                            <span className="text-xs opacity-60">:{item.description.en.main.toLowerCase().replace(/\s+/g, '_')}:</span>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
                                         </div>
                                     )}
                                 </div>
-                            );
-                        })()}
+                            ) : (
+                                <div
+                                    className="w-full min-h-[160px] p-3 border border-black/5 rounded-md resize-y text-zinc-900 whitespace-pre-wrap break-words overflow-auto transition-colors duration-200"
+                                    style={{ backgroundColor: 'transparent' }}
+                                    onDoubleClick={(e) => {
+                                        let node = e.target as HTMLElement | null;
+                                        while (node) {
+                                            if (node.tagName === "A") return;
+                                            node = node.parentElement;
+                                        }
+                                        saveCurrentEditing();
+                                        setEditingBlockId(block.id);
+                                        setEditingContent(block.content);
+                                        setFocusType('content');
+                                    }}
+                                    dangerouslySetInnerHTML={{ __html: formatText(block.content) }}
+                                />
+                            )}
+                            {/* Image Attachment Preview Grid */}
+                            {(() => {
+                                const attachments = block.attachments || [];
+                                const legacyImages = block.images || [];
 
-                        <div className="flex items-center mt-1 h-10 relative">
-                            {/* Left side: Tag or Editor */}
-                            <div className="flex-1 flex items-center justify-start">
-                                {editingBlockId === block.id && (
-                                    <div className="flex items-center gap-3 px-2 py-1 bg-zinc-800 rounded-md order-1 sm:order-none scale-90 sm:scale-100 origin-left">
-                                        <div className="flex items-center gap-1 border-r border-zinc-700 pr-3">
-                                            <span className="text-zinc-400 text-[10px] font-bold">#</span>
-                                            <input
-                                                type="text"
-                                                value={block.userTag || ""}
-                                                onChange={(e) => updateBlockTag(block.id, e.target.value.toUpperCase())}
-                                                className="bg-transparent text-white text-[10px] focus:outline-none w-16 uppercase font-bold"
-                                                placeholder="TAG..."
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            {[
-                                                { h: "#FEFCE8", n: lang === "es" ? "Amarillo" : "Yellow" },
-                                                { h: "#FEE2E2", n: lang === "es" ? "Rojo" : "Red" },
-                                                { h: "#E0F2FE", n: lang === "es" ? "Azul" : "Blue" },
-                                                { h: "#DCFCE7", n: lang === "es" ? "Verde" : "Green" },
-                                                { h: "#F3E8FF", n: lang === "es" ? "Violeta" : "Purple" },
-                                                { h: "#FFEDD5", n: lang === "es" ? "Naranja" : "Orange" }
-                                            ].map((c) => (
-                                                <button
-                                                    key={c.h}
-                                                    title={c.n}
-                                                    onClick={() => {
-                                                        if (block.userTag) {
-                                                            updateTagColor(block.userTag, c.h);
+                                // Combine both, filtering for images
+                                const imageAttachments = [
+                                    ...legacyImages.map((url, i) => ({ url, name: 'image', type: 'legacy', index: i })),
+                                    ...attachments
+                                        .filter(a => a.type.startsWith('image/') || a.name.toLowerCase().endsWith('.jpg') || a.name.toLowerCase().endsWith('.jpeg'))
+                                        .map((a, i) => ({ ...a, type: 'attachment', index: i }))
+                                ].slice(0, 4);
+
+                                if (imageAttachments.length === 0) return null;
+
+                                return (
+                                    <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        {imageAttachments.map((img, idx) => {
+                                            const fileKey = `${block.id}-img-${idx}`;
+                                            const isDeletingThisFile = deletingFileId === fileKey;
+                                            return (
+                                                <div
+                                                    key={`${img.type}-${idx}`}
+                                                    className={`relative group/img aspect-square rounded-md overflow-hidden border border-black/10 bg-black/5 transition-all ${isDeletingThisFile ? 'cursor-pointer' : 'cursor-zoom-in'}`}
+                                                    onClick={(e) => {
+                                                        if (isDeletingThisFile) {
+                                                            e.stopPropagation();
+                                                            removeAttachment(block.id, img.index, img.type === 'legacy');
+                                                            setDeletingFileId(null);
+                                                        } else {
+                                                            setImageModalUrl(img.url);
                                                         }
-                                                        updateBlockColor(block.id, c.h);
                                                     }}
-                                                    className={`w-4 h-4 rounded-full border border-white/20 transition-transform hover:scale-125 cursor-pointer ${((block.userTag && tagColors[block.userTag]) || block.color) === c.h ? "ring-2 ring-blue-500 scale-110" : ""}`}
-                                                    style={{ backgroundColor: c.h }}
-                                                />
-                                            ))}
-                                        </div>
+                                                >
+                                                    <img src={img.url} alt="" className="w-full h-full object-cover transition-transform group-hover/img:scale-105 pointer-events-none" />
+
+                                                    {/* Red Overlay when confirmed */}
+                                                    {isDeletingThisFile && (
+                                                        <div className="absolute inset-0 bg-red-500/30 pointer-events-none animate-in fade-in duration-200" />
+                                                    )}
+
+                                                    {editingBlockId === block.id && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (e.nativeEvent.stopImmediatePropagation) e.nativeEvent.stopImmediatePropagation();
+                                                                if (isDeletingThisFile) {
+                                                                    removeAttachment(block.id, img.index, img.type === 'legacy');
+                                                                    setDeletingFileId(null);
+                                                                } else {
+                                                                    setDeletingFileId(fileKey);
+                                                                    setDeletingBlockId(null); // Clear other deletions
+                                                                }
+                                                            }}
+                                                            className={`absolute top-1 right-1 p-1 rounded-full transition-all cursor-pointer shadow-sm z-10 border active:scale-95 ${isDeletingThisFile
+                                                                ? "bg-red-500 text-white opacity-100 border-red-600 scale-110"
+                                                                : "bg-white/90 text-red-500 opacity-0 group-hover/img:opacity-100 hover:bg-red-50 border-red-100"
+                                                                }`}
+                                                        >
+                                                            {isDeletingThisFile ? (
+                                                                <Check size={12} className="pointer-events-none" />
+                                                            ) : (
+                                                                <X size={12} className="pointer-events-none" />
+                                                            )}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* Add More Images Button */}
+                                        {editingBlockId === block.id && imageAttachments.length > 0 && imageAttachments.length < 4 && (
+                                            <div
+                                                className="relative aspect-square rounded-md border-2 border-dashed border-black/10 bg-black/5 hover:bg-black/10 hover:border-black/20 transition-all cursor-pointer flex flex-col items-center justify-center gap-1 group/add-img"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const input = document.createElement('input');
+                                                    input.type = 'file';
+                                                    input.accept = 'image/png, image/jpeg, image/jpg';
+                                                    input.multiple = true;
+                                                    input.onchange = (ev) => {
+                                                        const target = ev.target as HTMLInputElement;
+                                                        handleFileUpload(block.id, target.files);
+                                                        target.value = '';
+                                                    };
+                                                    input.click();
+                                                }}
+                                            >
+                                                <Plus className="w-6 h-6 text-black/30 group-hover/add-img:text-black/50 transition-colors" />
+                                                <span className="text-[10px] text-zinc-500 font-bold uppercase group-hover/add-img:text-zinc-600">
+                                                    {lang === 'es' ? 'Imagen' : 'Image'}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                                {editingBlockId !== block.id && (
-                                    block.userTag ? (
-                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/10 text-zinc-700 uppercase tracking-wider border border-black/10 whitespace-nowrap">
-                                            #{block.userTag}
-                                        </span>
-                                    ) : (
-                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-400/10 text-zinc-400 uppercase tracking-widest border border-black/5 whitespace-nowrap italic">
-                                            {t.noTag}
-                                        </span>
-                                    )
-                                )}
-                            </div>
+                                );
+                            })()}
+
+                            <div className="flex items-center mt-1 h-10 relative">
+                                {/* Left side: Tag or Editor */}
+                                <div className="flex-1 flex items-center justify-start">
+                                    {editingBlockId === block.id && (
+                                        <div className="flex items-center gap-3 px-2 py-1 bg-zinc-800 rounded-md order-1 sm:order-none scale-90 sm:scale-100 origin-left">
+                                            <div className="flex items-center gap-1 border-r border-zinc-700 pr-3">
+                                                <span className="text-zinc-400 text-[10px] font-bold">#</span>
+                                                <input
+                                                    type="text"
+                                                    value={editingBlockId === block.id ? editingTag : (block.userTag || "")}
+                                                    onChange={(e) => setEditingTag(e.target.value.toUpperCase())}
+                                                    onFocus={() => setFocusType('tag')}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") {
+                                                            e.preventDefault();
+                                                            if (editingBlockId === block.id) {
+                                                                updateBlock(block.id, editingContent, editingTitle, editingTag);
+                                                                setEditingBlockId(null);
+                                                                setEditingContent("");
+                                                                setEditingTitle("");
+                                                                setEditingTag("");
+                                                                (e.target as HTMLInputElement).blur();
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="bg-transparent text-white text-[10px] focus:outline-none w-16 uppercase font-bold"
+                                                    placeholder="TAG..."
+                                                    data-input-type="tag"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                {[
+                                                    { h: "#FEFCE8", n: lang === "es" ? "Amarillo" : "Yellow" },
+                                                    { h: "#FEE2E2", n: lang === "es" ? "Rojo" : "Red" },
+                                                    { h: "#E0F2FE", n: lang === "es" ? "Azul" : "Blue" },
+                                                    { h: "#DCFCE7", n: lang === "es" ? "Verde" : "Green" },
+                                                    { h: "#F3E8FF", n: lang === "es" ? "Violeta" : "Purple" },
+                                                    { h: "#FFEDD5", n: lang === "es" ? "Naranja" : "Orange" }
+                                                ].map((c) => (
+                                                    <button
+                                                        key={c.h}
+                                                        title={c.n}
+                                                        onClick={() => {
+                                                            if (block.userTag) {
+                                                                updateTagColor(block.userTag, c.h);
+                                                            }
+                                                            updateBlockColor(block.id, c.h);
+                                                        }}
+                                                        className={`w-4 h-4 rounded-full border border-white/20 transition-transform hover:scale-125 cursor-pointer ${((block.userTag && tagColors[block.userTag]) || block.color) === c.h ? "ring-2 ring-blue-500 scale-110" : ""}`}
+                                                        style={{ backgroundColor: c.h }}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {editingBlockId !== block.id && (
+                                        block.userTag ? (
+                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/10 text-zinc-700 uppercase tracking-wider border border-black/10 whitespace-nowrap">
+                                                #{block.userTag}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-400/10 text-zinc-400 uppercase tracking-widest border border-black/5 whitespace-nowrap italic">
+                                                {t.noTag}
+                                            </span>
+                                        )
+                                    )}
+                                </div>
 
 
-                            {/* Right side: Actions / Arrows */}
-                            <div className="flex-1 flex items-center justify-end gap-2">
-                                {/* Attachment Display (Footer - Only for non-images) */}
-                                <div className="flex flex-wrap items-center justify-end gap-2">
-                                    {(block.attachments || []).filter(a => !a.type.startsWith('image/') && !a.name.toLowerCase().endsWith('.jpg') && !a.name.toLowerCase().endsWith('.jpeg')).map((file, idx) => {
-                                        const isDeletingFile = deletingFileBlockId === block.id;
-                                        return (
-                                            <div key={idx} className="flex items-center gap-1 group/file">
+                                {/* Right side: Actions / Arrows */}
+                                <div className="flex-1 flex items-center justify-end gap-2">
+                                    {/* Attachment Display (Footer - Only for non-images) */}
+                                    <div className="flex flex-wrap items-center justify-end gap-2">
+                                        {(block.attachments || []).filter(a => !a.type.startsWith('image/') && !a.name.toLowerCase().endsWith('.jpg') && !a.name.toLowerCase().endsWith('.jpeg')).map((file, idx) => {
+                                            const fileKey = `${block.id}-file-${idx}`;
+                                            const isDeletingThisFile = deletingFileId === fileKey;
+                                            return (
+                                                <div key={idx} className="flex items-center gap-1 group/file">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            if (e.nativeEvent.stopImmediatePropagation) e.nativeEvent.stopImmediatePropagation();
+                                                            if (editingBlockId === block.id) {
+                                                                if (isDeletingThisFile) {
+                                                                    const realIdx = block.attachments?.findIndex(a => a === file);
+                                                                    if (realIdx !== undefined && realIdx !== -1) {
+                                                                        removeAttachment(block.id, realIdx, false);
+                                                                    }
+                                                                    setDeletingFileId(null);
+                                                                } else {
+                                                                    setDeletingFileId(fileKey);
+                                                                    setDeletingBlockId(null);
+                                                                }
+                                                                return;
+                                                            }
+                                                            const link = document.createElement('a');
+                                                            link.href = file.url;
+                                                            link.download = file.name;
+                                                            link.click();
+                                                        }}
+                                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all scale-90 sm:scale-100 origin-right cursor-pointer shadow-sm border max-w-[150px] sm:max-w-[200px] group/btn ${editingBlockId === block.id
+                                                            ? isDeletingThisFile
+                                                                ? "bg-red-500 text-white border-red-600 scale-105"
+                                                                : "bg-transparent text-red-600 border-red-500/30 hover:bg-red-50"
+                                                            : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border-black/5"
+                                                            }`}
+                                                    >
+                                                        {editingBlockId === block.id ? (
+                                                            <div className="w-3.5 h-3.5 flex items-center justify-center flex-shrink-0 pointer-events-none">
+                                                                {isDeletingThisFile ? (
+                                                                    <Check size={14} className="text-white" />
+                                                                ) : (
+                                                                    <X size={14} className="text-red-500" />
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <Paperclip size={14} className="text-zinc-400 flex-shrink-0 pointer-events-none" />
+                                                        )}
+                                                        <span className="text-[10px] font-bold uppercase truncate pointer-events-none">
+                                                            {file.name}
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* Action Button: Attach (Only if NO non-image files exist) */}
+                                        {editingBlockId === block.id && (block.attachments || []).filter(a => !a.type.startsWith('image/') && !a.name.toLowerCase().endsWith('.jpg') && !a.name.toLowerCase().endsWith('.jpeg')).length === 0 && (
+                                            <div className="flex items-center">
                                                 <button
                                                     onClick={(e) => {
                                                         e.preventDefault();
-                                                        if (editingBlockId === block.id) {
-                                                            if (isDeletingFile) {
-                                                                setDeletingFileBlockId(null);
-                                                            } else {
-                                                                setDeletingFileBlockId(block.id);
-                                                            }
-                                                            return;
-                                                        }
-                                                        const link = document.createElement('a');
-                                                        link.href = file.url;
-                                                        link.download = file.name;
-                                                        link.click();
+                                                        e.stopPropagation();
+                                                        fileInputRefs.current[block.id]?.click();
                                                     }}
-                                                    onDoubleClick={(e) => {
-                                                        if (editingBlockId === block.id) {
-                                                            e.preventDefault();
-                                                            const realIdx = block.attachments?.findIndex(a => a === file);
-                                                            if (realIdx !== undefined && realIdx !== -1) {
-                                                                removeAttachment(block.id, realIdx, false);
-                                                            }
-                                                            setDeletingFileBlockId(null);
-                                                        }
-                                                    }}
-                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all scale-90 sm:scale-100 origin-right cursor-pointer shadow-sm border max-w-[150px] sm:max-w-[200px] group/btn ${isDeletingFile && editingBlockId === block.id
-                                                        ? "bg-red-500 text-white border-red-600 hover:bg-red-600"
-                                                        : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border-black/5"
-                                                        }`}
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md transition-all scale-90 sm:scale-100 origin-right cursor-pointer shadow-sm"
                                                 >
-                                                    {editingBlockId === block.id ? (
-                                                        <>
-                                                            {isDeletingFile ? (
-                                                                <X size={14} className="text-white flex-shrink-0" />
-                                                            ) : (
-                                                                <>
-                                                                    <Paperclip size={14} className="text-zinc-400 flex-shrink-0 group-hover/btn:hidden" />
-                                                                    <X size={14} className="text-zinc-400 flex-shrink-0 hidden group-hover/btn:block" />
-                                                                </>
-                                                            )}
-                                                        </>
-                                                    ) : (
-                                                        <Paperclip size={14} className="text-zinc-400 flex-shrink-0" />
-                                                    )}
-                                                    <span className="text-[10px] font-bold uppercase truncate">
-                                                        {file.name}
+                                                    <Paperclip size={14} className="text-zinc-400" />
+                                                    <span className="text-[10px] font-bold uppercase whitespace-nowrap">
+                                                        {lang === 'es' ? (
+                                                            <>Adjuntar archivo <span className="hidden sm:inline">(PDF, mp4, etc)</span></>
+                                                        ) : (
+                                                            <>Attach file <span className="hidden sm:inline">(PDF, mp4, etc)</span></>
+                                                        )}
                                                     </span>
                                                 </button>
+                                                <input
+                                                    type="file"
+                                                    ref={el => { fileInputRefs.current[block.id] = el }}
+                                                    className="hidden"
+                                                    accept={(() => {
+                                                        const currentLegacy = block.images?.length || 0;
+                                                        const currentAttach = (block.attachments || []).filter(a => a.type.startsWith('image/') || a.name.toLowerCase().endsWith('.jpg') || a.name.toLowerCase().endsWith('.jpeg')).length;
+                                                        const totalImages = currentLegacy + currentAttach;
+                                                        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+                                                        const maxImgs = isMobile ? 2 : 4;
+
+                                                        if (totalImages >= maxImgs) {
+                                                            // Limit is reached, only accept non-images (excluding typical image mime types)
+                                                            return ".pdf,.doc,.docx,.txt,.mp4,.zip,.rar,.xls,.xlsx";
+                                                        }
+                                                        return undefined; // Accept any
+                                                    })()}
+                                                    multiple
+                                                    onChange={(e) => {
+                                                        handleFileUpload(block.id, e.target.files);
+                                                        e.target.value = '';
+                                                    }}
+                                                />
                                             </div>
-                                        );
-                                    })}
-
-                                    {/* Action Button: Attach (Only if NO non-image files exist) */}
-                                    {editingBlockId === block.id && (block.attachments || []).filter(a => !a.type.startsWith('image/') && !a.name.toLowerCase().endsWith('.jpg') && !a.name.toLowerCase().endsWith('.jpeg')).length === 0 && (
-                                        <div className="flex items-center">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    fileInputRefs.current[block.id]?.click();
-                                                }}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md transition-all scale-90 sm:scale-100 origin-right cursor-pointer shadow-sm"
-                                            >
-                                                <Paperclip size={14} className="text-zinc-400" />
-                                                <span className="text-[10px] font-bold uppercase whitespace-nowrap">
-                                                    {lang === 'es' ? (
-                                                        <>Adjuntar archivo <span className="hidden sm:inline">(PDF, mp4, etc)</span></>
-                                                    ) : (
-                                                        <>Attach file <span className="hidden sm:inline">(PDF, mp4, etc)</span></>
-                                                    )}
-                                                </span>
-                                            </button>
-                                            <input
-                                                type="file"
-                                                ref={el => { fileInputRefs.current[block.id] = el }}
-                                                className="hidden"
-                                                accept={(() => {
-                                                    const currentLegacy = block.images?.length || 0;
-                                                    const currentAttach = (block.attachments || []).filter(a => a.type.startsWith('image/') || a.name.toLowerCase().endsWith('.jpg') || a.name.toLowerCase().endsWith('.jpeg')).length;
-                                                    const totalImages = currentLegacy + currentAttach;
-                                                    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-                                                    const maxImgs = isMobile ? 2 : 4;
-
-                                                    if (totalImages >= maxImgs) {
-                                                        // Limit is reached, only accept non-images (excluding typical image mime types)
-                                                        return ".pdf,.doc,.docx,.txt,.mp4,.zip,.rar,.xls,.xlsx";
-                                                    }
-                                                    return undefined; // Accept any
-                                                })()}
-                                                multiple
-                                                onChange={(e) => handleFileUpload(block.id, e.target.files)}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {blocks.length > 1 && (
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => moveBlockDown(block.id)}
-                                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default p-1"
-                                            disabled={blocks.findIndex(b => b.id === block.id) >= blocks.length - 1}
-                                            title={t.moveDown || "Move Down"}
-                                        >
-                                            <ChevronDown size={20} />
-                                        </button>
-                                        <button
-                                            onClick={() => moveBlockUp(block.id)}
-                                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default p-1"
-                                            disabled={blocks.findIndex(b => b.id === block.id) <= 0}
-                                            title={t.moveUp || "Move Up"}
-                                        >
-                                            <ChevronUp size={20} />
-                                        </button>
+                                        )}
                                     </div>
-                                )}
+
+                                </div>
                             </div>
                         </div>
+
+                        {/* Note Ordering Arrows - Positioned to the right outside the block */}
+                        {blocks.length > 1 && (
+                            <div className="absolute left-full ml-3 bottom-[-0.24px] flex flex-col gap-1 lg:opacity-0 lg:group-hover/note:opacity-100 transition-opacity">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (e.nativeEvent.stopImmediatePropagation) e.nativeEvent.stopImmediatePropagation();
+                                        moveBlockUp(block.id);
+                                    }}
+                                    className="text-gray-400 hover:text-[#6866D6] dark:hover:text-white transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default p-1 bg-white/50 dark:bg-black/20 rounded shadow-sm hover:shadow transition-all border border-black/5"
+                                    disabled={blocks.findIndex(b => b.id === block.id) <= 0}
+                                    title={t.moveUp || "Move Up"}
+                                >
+                                    <ChevronUp size={20} />
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (e.nativeEvent.stopImmediatePropagation) e.nativeEvent.stopImmediatePropagation();
+                                        moveBlockDown(block.id);
+                                    }}
+                                    className="text-gray-400 hover:text-[#6866D6] dark:hover:text-white transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default p-1 bg-white/50 dark:bg-black/20 rounded shadow-sm hover:shadow transition-all border border-black/5"
+                                    disabled={blocks.findIndex(b => b.id === block.id) >= blocks.length - 1}
+                                    title={t.moveDown || "Move Down"}
+                                >
+                                    <ChevronDown size={20} />
+                                </button>
+                            </div>
+                        )}
                     </div>
-                ))}
+                ))
+                }
             </div>
 
             {/* Floating Links Component */}
@@ -1113,7 +1255,7 @@ export default function Home({ lang }: HomeProps) {
                     />
                 </div>
             )}
-        </section >
+        </section>
     );
 }
 
